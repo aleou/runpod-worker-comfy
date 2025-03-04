@@ -5,12 +5,13 @@ on:
     branches: [ "main" ]  # Déclenchement quand on pousse sur "main"
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:  # Permet de déclencher manuellement via GitHub Actions UI
 
 jobs:
   build:
     runs-on: ubuntu-latest  # Utiliser un serveur GitHub
 
-    environment: Docker  # Utiliser l'environnement "Docker"
+    environment: Docker  # Utilisation de l’environnement Docker pour récupérer les secrets
 
     steps:
       - name: Checkout repository
@@ -25,11 +26,15 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
 
-      - name: Build and Push Docker Image
+      - name: Build and Push Docker Image with WAN
         uses: docker/build-push-action@v4
         with:
           context: .
           push: true
-          tags: aleou/runpod-worker-comfy:latest
+          tags: |
+            aleou/runpod-worker-comfy:wan2.1
+            aleou/runpod-worker-comfy:latest
           cache-from: type=registry,ref=aleou/runpod-worker-comfy:latest
           cache-to: type=inline
+          build-args: |
+            MODEL_TYPE=Wan
