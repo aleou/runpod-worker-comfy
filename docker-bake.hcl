@@ -1,5 +1,5 @@
 variable "DOCKERHUB_REPO" {
-  default = "timpietruskyblibla"
+  default = "aleou"
 }
 
 variable "DOCKERHUB_IMG" {
@@ -7,7 +7,7 @@ variable "DOCKERHUB_IMG" {
 }
 
 variable "RELEASE_VERSION" {
-  default = "latest"
+  default = "3.2"
 }
 
 variable "HUGGINGFACE_ACCESS_TOKEN" {
@@ -83,6 +83,18 @@ target "wan2-1" {
   }
   # Tag par exemple : <repo>/<img>:3.4.0-wan2.1
   tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:${RELEASE_VERSION}-wan2.1"]
+  inherits = ["base"]
+}
+
+target "hunyuan" {
+  context = "."
+  dockerfile = "Dockerfile"
+  target = "final"
+  args = {
+    MODEL_TYPE = "Hunyuhan"
+    HUGGINGFACE_ACCESS_TOKEN = "${HUGGINGFACE_ACCESS_TOKEN}"
+  }
+  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:${RELEASE_VERSION}-hunyuan"]
   inherits = ["base"]
 }
 
