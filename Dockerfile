@@ -45,7 +45,6 @@
   
   # Optionally copy the snapshot file
   ADD *snapshot*.json /
-  
   # Restore the snapshot to install custom nodes
   RUN /restore_snapshot.sh
   
