@@ -97,4 +97,3 @@ target "hunyuan" {
   tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:${RELEASE_VERSION}-hunyuan"]
   inherits = ["base"]
 }
-
