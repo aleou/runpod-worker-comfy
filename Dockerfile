@@ -9,18 +9,18 @@
   ENV PYTHONUNBUFFERED=1
   ENV CMAKE_BUILD_PARALLEL_LEVEL=8
   
-  # Install Python, Git, etc.
-  RUN apt-get update && apt-get install -y \
-      python3.10 python3-pip git wget aria2 libgl1 vim curl ca-certificates libcudnn8 libcudnn8-dev \
-      && ln -sf /usr/bin/python3.10 /usr/bin/python \
-      && ln -sf /usr/bin/pip3 /usr/bin/pip \
-      && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+  # au lieu d’installer python3.10
+  RUN apt-get update && apt-get install -y git wget aria2 libgl1 vim curl ca-certificates libcudnn8 libcudnn8-dev \
+  && rm -rf /var/lib/apt/lists/*
+
+  RUN pip install --upgrade pip comfy-cli
+
   
   # Install comfy-cli
-  RUN pip install comfy-cli
+  RUN pip install --upgrade pip comfy-cli
   
   # Install ComfyUI
-  RUN /usr/bin/yes | comfy --workspace /comfyui install --cuda-version 12.6 --nvidia --version 0.3.57
+  RUN comfy --workspace /comfyui install --nvidia --version 0.3.57
   
   # Change working directory to ComfyUI
   WORKDIR /comfyui
