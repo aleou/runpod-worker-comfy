@@ -61,6 +61,18 @@ target "flux1-schnell" {
   inherits = ["base"]
 }
 
+target "Qwen-image" {
+  context = "."
+  dockerfile = "Dockerfile"
+  target = "final"
+  args = {
+    MODEL_TYPE = "Qwen-image"
+    HUGGINGFACE_ACCESS_TOKEN = "${HUGGINGFACE_ACCESS_TOKEN}"
+  }
+  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:${RELEASE_VERSION}-Qwen-image"]
+  inherits = ["base"]
+}
+
 target "flux1-dev" {
   context = "."
   dockerfile = "Dockerfile"

@@ -1,7 +1,7 @@
 # --------------------------------------------------------
 # Stage 1: Base image with common dependencies
 # --------------------------------------------------------
-  FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04 as base
+  FROM runpod/pytorch:2.8.0-py3.11-cuda12.8.1-cudnn-devel-ubuntu22.04 as base
 
   # Prevent interactive prompts during installation
   ENV DEBIAN_FRONTEND=noninteractive
@@ -20,7 +20,7 @@
   RUN pip install comfy-cli
   
   # Install ComfyUI
-  RUN /usr/bin/yes | comfy --workspace /comfyui install --cuda-version 12.4 --nvidia --version 0.3.29
+  RUN /usr/bin/yes | comfy --workspace /comfyui install --cuda-version 12.4 --nvidia --version 0.3.57
   
   # Change working directory to ComfyUI
   WORKDIR /comfyui
@@ -78,6 +78,20 @@
       https://huggingface.co/city96/t5-v1_1-xxl-encoder-gguf/resolve/main/t5-v1_1-xxl-encoder-Q5_K_S.gguf & \
     aria2c -x16 -s16 -d models/clip -o ViT-L-14-TEXT-detail-improved-hiT-GmP-TE-only-HF.safetensors \
       https://huggingface.co/zer0int/CLIP-GmP-ViT-L-14/resolve/main/ViT-L-14-TEXT-detail-improved-hiT-GmP-TE-only-HF.safetensors & \
+    aria2c -x16 -s16 -d models/upscale_models -o 4x_foolhardy_Remacri.pth \
+      https://huggingface.co/FacehugmanIII/4x_foolhardy_Remacri/resolve/main/4x_foolhardy_Remacri.pth & \
+    aria2c -x16 -s16 -d models/upscale_models -o 4x_NMKD-Siax_200k.pth \
+      https://huggingface.co/uwg/upscaler/resolve/main/ESRGAN/4x_NMKD-Siax_200k.pth & \
+    wait; \
+  fi
+
+    RUN if [ "$MODEL_TYPE" = "Qwen-image" ]; then \
+    aria2c -x16 -s16 -d models/vae -o qwen_image_vae.safetensors \
+    https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/vae/qwen_image_vae.safetensors & \
+    aria2c -x16 -s16 -d models/diffusion_models -o qwen-image-Q8_0.gguf \
+      https://huggingface.co/city96/Qwen-Image-gguf/resolve/main/qwen-image-Q8_0.gguf & \
+    aria2c -x16 -s16 -d models/clip -o Qwen2.5-VL-7B-Instruct-UD-Q8_K_XL.gguf \
+      https://huggingface.co/unsloth/Qwen2.5-VL-7B-Instruct-GGUF/resolve/main/Qwen2.5-VL-7B-Instruct-UD-Q8_K_XL.gguf & \
     aria2c -x16 -s16 -d models/upscale_models -o 4x_foolhardy_Remacri.pth \
       https://huggingface.co/FacehugmanIII/4x_foolhardy_Remacri/resolve/main/4x_foolhardy_Remacri.pth & \
     aria2c -x16 -s16 -d models/upscale_models -o 4x_NMKD-Siax_200k.pth \
