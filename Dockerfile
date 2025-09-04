@@ -14,13 +14,10 @@
   && rm -rf /var/lib/apt/lists/*
 
   RUN pip install --upgrade pip comfy-cli
-
-  
-  # Install comfy-cli
-  RUN pip install --upgrade pip comfy-cli
   
   # Install ComfyUI
-  RUN comfy --workspace /comfyui install --nvidia --version 0.3.57
+  RUN bash -lc 'set +o pipefail; printf "n\n" | comfy --workspace /comfyui install --nvidia --version 0.3.57; exit ${PIPESTATUS[1]}'
+  RUN comfy tracking disable
   
   # Change working directory to ComfyUI
   WORKDIR /comfyui
