@@ -7,7 +7,7 @@ variable "DOCKERHUB_IMG" {
 }
 
 variable "RELEASE_VERSION" {
-  default = "3.7"
+  default = "4.0"
 }
 
 variable "HUGGINGFACE_ACCESS_TOKEN" {
