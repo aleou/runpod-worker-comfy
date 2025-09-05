@@ -142,13 +142,7 @@
   # Copy models from stage 2 to the final image
   COPY --from=downloader /comfyui/models /comfyui/models
 
-  # ------------ correctif SSL pour Let’s Encrypt R11 ----------
-  RUN pip install --no-cache-dir --upgrade certifi urllib3 botocore boto3 awscli
-  # ------------------------------------------------------------
-  
-  # Final command
-  CMD ["/start.sh"]
-  
+
   # ------------ correctif SSL pour Let’s Encrypt R11 ----------
   RUN pip install --no-cache-dir --upgrade certifi urllib3 botocore boto3 awscli
   # ------------------------------------------------------------

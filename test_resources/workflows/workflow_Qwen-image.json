@@ -1,0 +1,137 @@
+{
+  "93": {
+    "inputs": {
+      "text": "jpeg compression",
+      "clip": [
+        "125",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "94": {
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Charger VAE"
+    }
+  },
+  "95": {
+    "inputs": {
+      "seed": 22,
+      "steps": 20,
+      "cfg": 4.5,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "124",
+        0
+      ],
+      "positive": [
+        "100",
+        0
+      ],
+      "negative": [
+        "93",
+        0
+      ],
+      "latent_image": [
+        "97",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "96": {
+    "inputs": {
+      "clip_name": null,
+      "type": "qwen_image",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Charger CLIP"
+    }
+  },
+  "97": {
+    "inputs": {
+      "width": 768,
+      "height": 1280,
+      "length": 1,
+      "batch_size": 1
+    },
+    "class_type": "EmptyHunyuanLatentVideo",
+    "_meta": {
+      "title": "EmptyHunyuanLatentVideo"
+    }
+  },
+  "98": {
+    "inputs": {
+      "samples": [
+        "95",
+        0
+      ],
+      "vae": [
+        "94",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "100": {
+    "inputs": {
+      "text": "ultra realistic ,\nA serene whispering wraith, glowing softly, rests among blooming flowers under a starry night sky. Its gentle presence seems to stir the petals around, creating a magical ambiance. The artwork is inspired by fantasy illustration, blending realism with imaginative elements. Captured in a medium shot, with a macro lens to focus on the delicate interactions between the wraith and the blossoms. Vivid colors, intricate details, and high definition.",
+      "clip": [
+        "125",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "102": {
+    "inputs": {
+      "images": [
+        "98",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Aperçu Image"
+    }
+  },
+  "124": {
+    "inputs": {
+      "unet_name": "qwen-image-Q8_0.gguf"
+    },
+    "class_type": "UnetLoaderGGUF",
+    "_meta": {
+      "title": "Unet Loader (GGUF)"
+    }
+  },
+  "125": {
+    "inputs": {
+      "clip_name": "Qwen2.5-VL-7B-Instruct-UD-Q8_K_XL.gguf",
+      "type": "qwen_image"
+    },
+    "class_type": "CLIPLoaderGGUF",
+    "_meta": {
+      "title": "CLIPLoader (GGUF)"
+    }
+  }
+}
