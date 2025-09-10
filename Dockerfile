@@ -40,10 +40,16 @@
   ADD src/start.sh src/restore_snapshot.sh src/rp_handler.py test_input.json ./
   RUN chmod +x /start.sh /restore_snapshot.sh
   
-  # Optionally copy the snapshot file
-  ADD *snapshot*.json /
-  # Restore the snapshot to install custom nodes
-  RUN /restore_snapshot.sh
+  ARG MODEL_TYPE
+  # Copie tous les snapshots dans l'image
+  COPY snapshots/ /snapshots/
+
+  # Sélectionne le bon snapshot et restaure
+  RUN set -eux; \
+      SNAP="/snapshots/snapshot-${MODEL_TYPE}.json"; \
+      test -f "$SNAP" || { echo "Snapshot introuvable pour MODEL_TYPE=${MODEL_TYPE} -> $SNAP"; exit 1; }; \
+      cp "$SNAP" /snapshot.json; \
+      /restore_snapshot.sh
   
   # Après l'installation de comfy-cli et avant la restauration du snapshot
   RUN pip uninstall -y opencv-contrib-python opencv-contrib-python-headless opencv-python opencv-python-headless || true \
