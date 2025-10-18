@@ -16,7 +16,7 @@
   RUN pip install --upgrade pip comfy-cli
   
   # Install ComfyUI
-  RUN bash -lc 'set +o pipefail; printf "%s\n" n y | comfy --workspace /comfyui install --nvidia --version 0.3.57; exit ${PIPESTATUS[1]}'
+  RUN bash -lc 'set +o pipefail; printf "%s\n" n y | comfy --workspace /comfyui install --nvidia --version 0.3.65; exit ${PIPESTATUS[1]}'
   RUN comfy tracking disable
   
   # Change working directory to ComfyUI
