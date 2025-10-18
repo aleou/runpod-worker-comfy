@@ -46,10 +46,15 @@
 
   # Sélectionne le bon snapshot et restaure
   RUN set -eux; \
-      SNAP="/snapshots/snapshot-${MODEL_TYPE}.json"; \
-      test -f "$SNAP" || { echo "Snapshot introuvable pour MODEL_TYPE=${MODEL_TYPE} -> $SNAP"; exit 1; }; \
-      cp "$SNAP" /snapshot.json; \
-      /restore_snapshot.sh
+      MODEL_TYPE_VALUE="${MODEL_TYPE:-}"; \
+      if [ -z "$MODEL_TYPE_VALUE" ]; then \
+        echo "MODEL_TYPE non defini, restauration du snapshot ignoree pour l'image base"; \
+      else \
+        SNAP="/snapshots/snapshot-${MODEL_TYPE_VALUE}.json"; \
+        test -f "$SNAP" || { echo "Snapshot introuvable pour MODEL_TYPE=${MODEL_TYPE_VALUE} -> $SNAP"; exit 1; }; \
+        cp "$SNAP" /snapshot.json; \
+        /restore_snapshot.sh; \
+      fi
   
   # Après l'installation de comfy-cli et avant la restauration du snapshot
   RUN pip uninstall -y opencv-contrib-python opencv-contrib-python-headless opencv-python opencv-python-headless || true \
