@@ -141,6 +141,17 @@
       https://huggingface.co/Comfy-Org/HunyuanVideo_repackaged/resolve/main/split_files/text_encoders/llava_llama3_fp8_scaled.safetensors & \
     wait; \
   fi
+
+  # Download upscale models if MODEL_TYPE = upscale
+  RUN if [ "$MODEL_TYPE" = "upscale" ]; then \
+    aria2c -x16 -s16 -d models/upscale_models -o 4x_foolhardy_Remacri.pth \
+      https://huggingface.co/FacehugmanIII/4x_foolhardy_Remacri/resolve/main/4x_foolhardy_Remacri.pth & \
+    aria2c -x16 -s16 -d models/upscale_models -o 4x_NMKD-Siax_200k.pth \
+      https://huggingface.co/uwg/upscaler/resolve/main/ESRGAN/4x_NMKD-Siax_200k.pth & \
+    aria2c -x16 -s16 -d models/upscale_models -o RealESRGAN_x4plus.pth \
+      https://huggingface.co/ai-forever/Real-ESRGAN/resolve/main/RealESRGAN_x4plus.pth & \
+    wait; \
+  fi
   
   
   # --------------------------------------------------------

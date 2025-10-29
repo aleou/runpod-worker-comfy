@@ -1,0 +1,374 @@
+{
+  "last_node_id": 15,
+  "last_link_id": 20,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "LoadImage",
+      "pos": [50, 100],
+      "size": [320, 310],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [1, 2],
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "example.png",
+        "image"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "YOLO Watermark Detector",
+      "pos": [420, 100],
+      "size": [300, 150],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [3, 4],
+          "slot_index": 0
+        },
+        {
+          "name": "BBOXES",
+          "type": "BBOXES",
+          "links": [5]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "YOLO Watermark Detector"
+      },
+      "widgets_values": [
+        0.15,
+        0.3,
+        50
+      ]
+    },
+    {
+      "id": 3,
+      "type": "MaskDilate",
+      "pos": [770, 100],
+      "size": [300, 100],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 3
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [6],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MaskDilate"
+      },
+      "widgets_values": [
+        7,
+        3
+      ]
+    },
+    {
+      "id": 4,
+      "type": "InpaintModelLoader",
+      "pos": [50, 500],
+      "size": [300, 80],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "INPAINT_MODEL",
+          "type": "INPAINT_MODEL",
+          "links": [7],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "InpaintModelLoader"
+      },
+      "widgets_values": [
+        "lama"
+      ]
+    },
+    {
+      "id": 5,
+      "type": "InpaintApply",
+      "pos": [420, 450],
+      "size": [300, 150],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 2
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 6
+        },
+        {
+          "name": "inpaint_model",
+          "type": "INPAINT_MODEL",
+          "link": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [8, 9],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "InpaintApply"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 6,
+      "type": "PreviewImage",
+      "pos": [770, 300],
+      "size": [400, 350],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 8
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 7,
+      "type": "SaveImage",
+      "pos": [770, 700],
+      "size": [400, 350],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 9
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "no_watermark"
+      ]
+    },
+    {
+      "id": 8,
+      "type": "PreviewMask",
+      "pos": [1200, 100],
+      "size": [300, 250],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 4
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewMask"
+      }
+    },
+    {
+      "id": 9,
+      "type": "BBoxVisualizer",
+      "pos": [1200, 400],
+      "size": [300, 250],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "bboxes",
+          "type": "BBOXES",
+          "link": 5
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "BBoxVisualizer"
+      }
+    },
+    {
+      "id": 10,
+      "type": "Note",
+      "pos": [50, 50],
+      "size": [1450, 40],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "properties": {
+        "text": ""
+      },
+      "widgets_values": [
+        "Watermark Removal Workflow - Load image → Detect watermarks (YOLO) → Dilate mask → Inpaint (LaMa) → Save result"
+      ],
+      "bgcolor": "#353",
+      "color": "#232"
+    },
+    {
+      "id": 11,
+      "type": "Note",
+      "pos": [50, 650],
+      "size": [300, 100],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "properties": {
+        "text": ""
+      },
+      "widgets_values": [
+        "LaMa Model: Best quality for inpainting\nAlternatives: ZITS, cv2 (faster but lower quality)"
+      ],
+      "bgcolor": "#335",
+      "color": "#223"
+    },
+    {
+      "id": 12,
+      "type": "Note",
+      "pos": [420, 250],
+      "size": [300, 100],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "properties": {
+        "text": ""
+      },
+      "widgets_values": [
+        "Confidence: 0.15 (detection threshold)\nIoU: 0.3 (overlap threshold)\nMax detections: 50"
+      ],
+      "bgcolor": "#335",
+      "color": "#223"
+    },
+    {
+      "id": 13,
+      "type": "Note",
+      "pos": [770, 220],
+      "size": [300, 60],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "properties": {
+        "text": ""
+      },
+      "widgets_values": [
+        "Kernel: 7x7, Iterations: 3\nExpands mask for better coverage"
+      ],
+      "bgcolor": "#335",
+      "color": "#223"
+    }
+  ],
+  "links": [
+    [1, 1, 0, 2, 0, "IMAGE"],
+    [2, 1, 0, 5, 0, "IMAGE"],
+    [3, 2, 0, 3, 0, "MASK"],
+    [4, 2, 0, 8, 0, "MASK"],
+    [5, 2, 1, 9, 0, "BBOXES"],
+    [6, 3, 0, 5, 1, "MASK"],
+    [7, 4, 0, 5, 2, "INPAINT_MODEL"],
+    [8, 5, 0, 6, 0, "IMAGE"],
+    [9, 5, 0, 7, 0, "IMAGE"]
+  ],
+  "groups": [
+    {
+      "title": "Input",
+      "bounding": [30, 70, 360, 380],
+      "color": "#3f789e",
+      "font_size": 24,
+      "locked": false
+    },
+    {
+      "title": "Detection",
+      "bounding": [400, 70, 340, 310],
+      "color": "#8A5F3A",
+      "font_size": 24,
+      "locked": false
+    },
+    {
+      "title": "Mask Processing",
+      "bounding": [750, 70, 340, 230],
+      "color": "#8A8A3A",
+      "font_size": 24,
+      "locked": false
+    },
+    {
+      "title": "Inpainting",
+      "bounding": [30, 470, 710, 310],
+      "color": "#3A8A5F",
+      "font_size": 24,
+      "locked": false
+    },
+    {
+      "title": "Output",
+      "bounding": [750, 270, 440, 810],
+      "color": "#3A5F8A",
+      "font_size": 24,
+      "locked": false
+    },
+    {
+      "title": "Debug/Preview",
+      "bounding": [1180, 70, 340, 600],
+      "color": "#5F3A8A",
+      "font_size": 24,
+      "locked": false
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.8,
+      "offset": [0, 0]
+    }
+  },
+  "version": 0.4
+}
