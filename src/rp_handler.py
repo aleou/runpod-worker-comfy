@@ -346,6 +346,7 @@ def process_output_images(outputs, job_id):
     # Process and upload/encode each file
     result_files = []
     use_s3 = bool(os.environ.get("BUCKET_ENDPOINT_URL"))
+    bucket_name = os.environ.get("BUCKET_NAME", "")
     
     for file_info in output_files:
         file_path = file_info["path"]
@@ -367,7 +368,10 @@ def process_output_images(outputs, job_id):
         try:
             if use_s3:
                 # Upload to S3
-                file_url = rp_upload.upload_image(job_id, local_file_path)
+                if bucket_name:
+                    file_url = rp_upload.upload_image(job_id, local_file_path, bucket_name=bucket_name)
+                else:
+                    file_url = rp_upload.upload_image(job_id, local_file_path)
                 result_files.append({
                     "filename": filename,
                     "url": file_url,
@@ -375,7 +379,7 @@ def process_output_images(outputs, job_id):
                     "format": file_info.get("format"),
                     "status": "success"
                 })
-                print(f"runpod-worker-comfy - ✓ {filename} uploaded to S3")
+                print(f"runpod-worker-comfy - ✓ {filename} uploaded to S3{f' (bucket: {bucket_name})' if bucket_name else ''}")
             else:
                 # Encode as base64
                 file_base64 = base64_encode(local_file_path)

@@ -94,16 +94,21 @@ Read our article here: https://blib.la/blog/comfyui-on-runpod
 
 This is only needed if you want to upload the generated picture to AWS S3. If you don't configure this, your image will be exported as base64-encoded string.
 
-- Create a bucket in region of your choice in AWS S3 (`BUCKET_ENDPOINT_URL`)
+- Create a bucket in region of your choice in AWS S3
 - Create an IAM that has access rights to AWS S3
 - Create an Access-Key (`BUCKET_ACCESS_KEY_ID` & `BUCKET_SECRET_ACCESS_KEY`) for that IAM
 - Configure these environment variables for your RunPod worker:
 
 | Environment Variable       | Description                                             | Example                                      |
 | -------------------------- | ------------------------------------------------------- | -------------------------------------------- |
-| `BUCKET_ENDPOINT_URL`      | The endpoint URL of your S3 bucket.                     | `https://<bucket>.s3.<region>.amazonaws.com` |
+| `BUCKET_ENDPOINT_URL`      | The endpoint URL of your S3 service.                    | `https://s3.<region>.amazonaws.com`          |
+| `BUCKET_NAME`              | The name of your S3 bucket (optional).                  | `runpodvid`                                  |
 | `BUCKET_ACCESS_KEY_ID`     | Your AWS access key ID for accessing the S3 bucket.     | `AKIAIOSFODNN7EXAMPLE`                       |
 | `BUCKET_SECRET_ACCESS_KEY` | Your AWS secret access key for accessing the S3 bucket. | `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY`   |
+
+**Note:** You can either:
+- Use `BUCKET_NAME` to specify the bucket separately (recommended for global RunPod S3 config)
+- Include the bucket name in `BUCKET_ENDPOINT_URL` like `https://<bucket>.s3.<region>.amazonaws.com` (legacy mode)
 
 ## Use the Docker image on RunPod
 

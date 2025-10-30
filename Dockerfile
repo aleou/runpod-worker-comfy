@@ -9,6 +9,10 @@
   ENV PYTHONUNBUFFERED=1
   ENV CMAKE_BUILD_PARALLEL_LEVEL=8
   
+  # Increase polling timeout for long video processing jobs (10 minutes = 2400 retries * 250ms)
+  ENV COMFY_POLLING_MAX_RETRIES=2400
+  ENV COMFY_POLLING_INTERVAL_MS=250
+  
   # au lieu d’installer python3.10
   RUN apt-get update && apt-get install -y git wget aria2 libgl1 vim curl ca-certificates libcudnn8 libcudnn8-dev \
   && rm -rf /var/lib/apt/lists/*
@@ -74,7 +78,7 @@
   WORKDIR /comfyui
   
   # Create necessary directories for models
-  RUN mkdir -p models/loras models/checkpoints models/vae models/text_encoders models/diffusion_models models/clip models/clip_vision models/upscale_models models/diffueraser
+  RUN mkdir -p models/loras models/checkpoints models/vae models/text_encoders models/diffusion_models models/clip models/clip_vision models/upscale_models models/diffueraser models/DiffuEraser/diffueraser models/DiffuEraser/propainter
   
     # Download WAN 2.1 if MODEL_TYPE = Wan
     RUN if [ "$MODEL_TYPE" = "flux1-dev" ]; then \
@@ -161,6 +165,14 @@
       https://huggingface.co/wangfuyun/PCM_Weights/resolve/main/sd15/pcm_sd15_smallcfg_2step_converted.safetensors & \
     aria2c -x16 -s16 -d models/checkpoints -o realisticVisionV51_v51VAE.safetensors \
       https://huggingface.co/lllyasviel/fav_models/resolve/main/fav/realisticVisionV51_v51VAE.safetensors & \
+    aria2c -x16 -s16 -d models/DiffuEraser/diffueraser -o diffusion_pytorch_model.safetensors \
+      https://huggingface.co/lixiaowen/diffuEraser/resolve/main/brushnet/diffusion_pytorch_model.safetensors & \
+    aria2c -x16 -s16 -d models/DiffuEraser/propainter -o raft-things.pth \
+      https://github.com/sczhou/ProPainter/releases/download/v0.1.0/raft-things.pth & \
+    aria2c -x16 -s16 -d models/DiffuEraser/propainter -o recurrent_flow_completion.pth \
+      https://github.com/sczhou/ProPainter/releases/download/v0.1.0/recurrent_flow_completion.pth & \
+    aria2c -x16 -s16 -d models/DiffuEraser/propainter -o ProPainter.pth \
+      https://github.com/sczhou/ProPainter/releases/download/v0.1.0/ProPainter.pth & \
     wait; \
   fi
   
