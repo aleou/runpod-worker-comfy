@@ -62,8 +62,20 @@ def validate_input(job_input):
                 "'images' must be a list of objects with 'name' and 'image' keys",
             )
 
+    # Validate 'files' in input, if provided (new parameter for URLs)
+    files = job_input.get("files")
+    if files is not None:
+        if not isinstance(files, list):
+            return None, "'files' must be a list"
+        
+        for file in files:
+            if "name" not in file:
+                return None, "Each file must have a 'name' field"
+            if "url" not in file:
+                return None, "Each file must have a 'url' field"
+
     # Return validated data and no error
-    return {"workflow": workflow, "images": images}, None
+    return {"workflow": workflow, "images": images, "files": files}, None
 
 
 def check_server(url, retries=500, delay=50):
@@ -149,6 +161,79 @@ def upload_images(images):
     return {
         "status": "success",
         "message": "All images uploaded successfully",
+        "details": responses,
+    }
+
+
+def download_files_from_urls(files):
+    """
+    Download files (images/videos) from URLs and save them to the ComfyUI input folder.
+
+    Args:
+        files (list): A list of dictionaries, each containing:
+                     - 'name': the filename to save as
+                     - 'url': the URL to download from
+
+    Returns:
+        dict: Status and details of the download operation.
+    """
+    if not files:
+        return {"status": "success", "message": "No files to download", "details": []}
+
+    # ComfyUI input folder path
+    COMFY_INPUT_PATH = os.environ.get("COMFY_INPUT_PATH", "/comfyui/input")
+    
+    # Create input directory if it doesn't exist
+    os.makedirs(COMFY_INPUT_PATH, exist_ok=True)
+
+    responses = []
+    download_errors = []
+
+    print(f"runpod-worker-comfy - downloading file(s) from URL(s)")
+
+    for file in files:
+        name = file["name"]
+        url = file["url"]
+        
+        try:
+            print(f"runpod-worker-comfy - downloading {name} from {url}")
+            
+            # Download the file with a timeout
+            response = requests.get(url, timeout=60, stream=True)
+            response.raise_for_status()
+            
+            # Save the file to the input folder
+            file_path = os.path.join(COMFY_INPUT_PATH, name)
+            
+            with open(file_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+            
+            responses.append(f"Successfully downloaded {name} to {file_path}")
+            print(f"runpod-worker-comfy - saved {name} to {file_path}")
+            
+        except requests.RequestException as e:
+            error_msg = f"Error downloading {name} from {url}: {str(e)}"
+            download_errors.append(error_msg)
+            print(f"runpod-worker-comfy - {error_msg}")
+        except Exception as e:
+            error_msg = f"Error saving {name}: {str(e)}"
+            download_errors.append(error_msg)
+            print(f"runpod-worker-comfy - {error_msg}")
+
+    if download_errors:
+        print(f"runpod-worker-comfy - file(s) download completed with errors")
+        return {
+            "status": "error",
+            "message": "Some files failed to download",
+            "details": download_errors,
+        }
+
+    print(f"runpod-worker-comfy - file(s) download complete")
+    return {
+        "status": "success",
+        "message": "All files downloaded successfully",
         "details": responses,
     }
 
@@ -296,6 +381,7 @@ def handler(job):
     # Extract validated data
     workflow = validated_data["workflow"]
     images = validated_data.get("images")
+    files = validated_data.get("files")
 
     # Make sure that the ComfyUI API is available
     check_server(
@@ -303,6 +389,12 @@ def handler(job):
         COMFY_API_AVAILABLE_MAX_RETRIES,
         COMFY_API_AVAILABLE_INTERVAL_MS,
     )
+
+    # Download files from URLs if they exist
+    if files:
+        download_result = download_files_from_urls(files)
+        if download_result["status"] == "error":
+            return download_result
 
     # Upload images if they exist
     upload_result = upload_images(images)

@@ -15,7 +15,7 @@ variable "HUGGINGFACE_ACCESS_TOKEN" {
 }
 
 group "default" {
-  targets = ["base", "sdxl", "sd3", "flux1-schnell", "flux1-dev","wan2-1","Qwen-image","hunyuan","upscale"]
+  targets = ["base", "sdxl", "sd3", "flux1-schnell", "flux1-dev","wan2-1","Qwen-image","hunyuan","upscale","watermark"]
 }
 
 target "base" {
@@ -118,5 +118,16 @@ target "upscale" {
     MODEL_TYPE = "upscale"
   }
   tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:${RELEASE_VERSION}-upscale"]
+  inherits = ["base"]
+}
+
+target "watermark" {
+  context = "."
+  dockerfile = "Dockerfile"
+  target = "final"
+  args = {
+    MODEL_TYPE = "watermark"
+  }
+  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:${RELEASE_VERSION}-watermark"]
   inherits = ["base"]
 }

@@ -1,0 +1,81 @@
+{
+  "input": {
+    "workflow": {
+      "7": {
+        "inputs": {
+          "video": "video.mp4",
+          "force_rate": 0,
+          "custom_width": 0,
+          "custom_height": 0,
+          "frame_load_cap": 0,
+          "skip_first_frames": 0,
+          "select_every_nth": 1,
+          "format": "AnimateDiff"
+        },
+        "class_type": "VHS_LoadVideo",
+        "_meta": {
+          "title": "Load Video (Upload) 🎥🅥🅗🅢"
+        }
+      },
+      "8": {
+        "inputs": {
+          "frame_rate": ["9", 0],
+          "loop_count": 0,
+          "filename_prefix": "123",
+          "format": "video/h264-mp4",
+          "pix_fmt": "yuv420p",
+          "crf": 19,
+          "save_metadata": true,
+          "trim_to_audio": false,
+          "pingpong": false,
+          "save_output": true,
+          "images": ["12", 0],
+          "audio": ["7", 2]
+        },
+        "class_type": "VHS_VideoCombine",
+        "_meta": {
+          "title": "Video Combine 🎥🅥🅗🅢"
+        }
+      },
+      "9": {
+        "inputs": {
+          "video_info": ["7", 3]
+        },
+        "class_type": "VHS_VideoInfo",
+        "_meta": {
+          "title": "Video Info 🎥🅥🅗🅢"
+        }
+      },
+      "12": {
+        "inputs": {
+          "aggressive_cleanup": "disable",
+          "report_memory": "enable",
+          "images": ["13", 0]
+        },
+        "class_type": "Free_Video_Memory",
+        "_meta": {
+          "title": "Free Video Memory"
+        }
+      },
+      "13": {
+        "inputs": {
+          "model_name": "realesr-general-x4v3.pth",
+          "upscale_method": "nearest-exact",
+          "factor": 2,
+          "device_strategy": "keep_loaded",
+          "images": ["7", 0]
+        },
+        "class_type": "Video_Upscale_With_Model",
+        "_meta": {
+          "title": "Video Upscale With Model"
+        }
+      }
+    },
+    "files": [
+      {
+        "name": "video.mp4",
+        "url": "http://s3web.aleou.app/api/v1/download-shared-object/aHR0cDovLzEyNy4wLjAuMTo5MDAwL3NvcmEtdmlkL2RmOTBlN2M0LTQzZDMtNDlkMC04MGQzLTBkNTlmMTVhZjhmMy5tcDQ_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1XNExaUVdBQ1dKVkxMRFFKQzNCMSUyRjIwMjUxMDI5JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI1MTAyOVQxMzI5MTRaJlgtQW16LUV4cGlyZXM9NDMyMDAmWC1BbXotU2VjdXJpdHktVG9rZW49ZXlKaGJHY2lPaUpJVXpVeE1pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmhZMk5sYzNOTFpYa2lPaUpYTkV4YVVWZEJRMWRLVmt4TVJGRktRek5DTVNJc0ltVjRjQ0k2TVRjMk1UYzROemN4Tnl3aWNHRnlaVzUwSWpvaVlXeGxiM1VpZlEuTGFZb1Zzc01PSloxVWg2NHpRVWJBTWFLS1NiNzh6bllIYnFaZC1za2gxVFY0Vi1YU3NndVJqVm1QQ21LWXh3ZnZ0eDJjUHpvY0xpOEx4YTZVbHBlOHcmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JnZlcnNpb25JZD1udWxsJlgtQW16LVNpZ25hdHVyZT1kZjQzMjIzNjk4NGRkZWIxNzc5YTU4YmUzMzc4ZjVlMWQ3YzY5ZWE2N2I0MDI5MGM2MWJjZGJkNGE1MWEwZDc1"
+      }
+    ]
+  }
+}
