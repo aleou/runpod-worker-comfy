@@ -155,7 +155,7 @@
 
   # Download watermark models if MODEL_TYPE = watermark
   RUN if [ "$MODEL_TYPE" = "watermark" ]; then \
-    aria2c -x16 -s16 -d models/diffusers -o pcm_sd15_smallcfg_2step_converted.safetensors \
+    aria2c -x16 -s16 -d models/loras -o pcm_sd15_smallcfg_2step_converted.safetensors \
       https://huggingface.co/wangfuyun/PCM_Weights/resolve/main/sd15/pcm_sd15_smallcfg_2step_converted.safetensors & \
     aria2c -x16 -s16 -d models/checkpoints -o realisticVisionV51_v51VAE.safetensors \
       https://huggingface.co/lllyasviel/fav_models/resolve/main/fav/realisticVisionV51_v51VAE.safetensors & \
