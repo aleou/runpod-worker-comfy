@@ -287,75 +287,133 @@ def base64_encode(img_path):
 
 def process_output_images(outputs, job_id):
     """
-    This function takes the "outputs" from image generation and the job ID,
-    then determines the correct way to return the image, either as a direct URL
-    to an AWS S3 bucket or as a base64 encoded string, depending on the
-    environment configuration.
-
+    Process outputs from ComfyUI workflow execution and upload to S3 or return as base64.
+    
+    Supports all ComfyUI output types:
+    - images: Standard image outputs (PNG, JPG, WEBP)
+    - gifs: Animated outputs from VHS_VideoCombine, SaveAnimatedWEBP, SaveAnimatedPNG (MP4, GIF, WEBP)
+    - videos: Direct video outputs from custom nodes
+    
     Args:
-        outputs (dict): A dictionary containing the outputs from image generation,
-                        typically includes node IDs and their respective output data.
-        job_id (str): The unique identifier for the job.
-
+        outputs (dict): ComfyUI execution outputs containing node results
+        job_id (str): Unique job identifier for S3 upload paths
+    
     Returns:
-        dict: A dictionary with the status ('success' or 'error') and the message,
-              which is either the URL to the image in the AWS S3 bucket or a base64
-              encoded string of the image. In case of error, the message details the issue.
-
-    The function works as follows:
-    - It first determines the output path for the images from an environment variable,
-      defaulting to "/comfyui/output" if not set.
-    - It then iterates through the outputs to find the filenames of the generated images.
-    - After confirming the existence of the image in the output folder, it checks if the
-      AWS S3 bucket is configured via the BUCKET_ENDPOINT_URL environment variable.
-    - If AWS S3 is configured, it uploads the image to the bucket and returns the URL.
-    - If AWS S3 is not configured, it encodes the image in base64 and returns the string.
-    - If the image file does not exist in the output folder, it returns an error status
-      with a message indicating the missing image file.
+        dict: Status, message, and files list with URLs or base64 data
     """
-
-    # The path where ComfyUI stores the generated images
     COMFY_OUTPUT_PATH = os.environ.get("COMFY_OUTPUT_PATH", "/comfyui/output")
-
-    output_images = {}
-
+    
+    output_files = []
+    
+    # Supported output types in ComfyUI
+    OUTPUT_TYPES = ["images", "gifs", "videos"]
+    
     for node_id, node_output in outputs.items():
-        if "images" in node_output:
-            for image in node_output["images"]:
-                output_images = os.path.join(image["subfolder"], image["filename"])
-
-    print(f"runpod-worker-comfy - image generation is done")
-
-    # expected image output folder
-    local_image_path = f"{COMFY_OUTPUT_PATH}/{output_images}"
-
-    print(f"runpod-worker-comfy - {local_image_path}")
-
-    # The image is in the output folder
-    if os.path.exists(local_image_path):
-        if os.environ.get("BUCKET_ENDPOINT_URL", False):
-            # URL to image in AWS S3
-            image = rp_upload.upload_image(job_id, local_image_path)
-            print(
-                "runpod-worker-comfy - the image was generated and uploaded to AWS S3"
-            )
-        else:
-            # base64 image
-            image = base64_encode(local_image_path)
-            print(
-                "runpod-worker-comfy - the image was generated and converted to base64"
-            )
-
-        return {
-            "status": "success",
-            "message": image,
-        }
-    else:
-        print("runpod-worker-comfy - the image does not exist in the output folder")
+        for output_type in OUTPUT_TYPES:
+            if output_type in node_output:
+                for item in node_output[output_type]:
+                    # Get subfolder and filename
+                    subfolder = item.get("subfolder", "")
+                    filename = item.get("filename")
+                    
+                    if not filename:
+                        print(f"runpod-worker-comfy - WARNING: missing filename in {output_type} output from node {node_id}")
+                        continue
+                    
+                    # Build file path
+                    if subfolder:
+                        file_path = os.path.join(subfolder, filename)
+                    else:
+                        file_path = filename
+                    
+                    output_files.append({
+                        "path": file_path,
+                        "type": item.get("type", "unknown"),
+                        "format": item.get("format", "unknown")
+                    })
+                    
+                print(f"runpod-worker-comfy - found {len(node_output[output_type])} {output_type} in node {node_id}")
+    
+    if not output_files:
+        print("runpod-worker-comfy - ERROR: no output files found in workflow results")
         return {
             "status": "error",
-            "message": f"the image does not exist in the specified output folder: {local_image_path}",
+            "message": "No output files found in workflow results",
         }
+    
+    print(f"runpod-worker-comfy - processing {len(output_files)} output file(s)")
+    
+    # Process and upload/encode each file
+    result_files = []
+    use_s3 = bool(os.environ.get("BUCKET_ENDPOINT_URL"))
+    
+    for file_info in output_files:
+        file_path = file_info["path"]
+        local_file_path = os.path.join(COMFY_OUTPUT_PATH, file_path)
+        filename = os.path.basename(file_path)
+        
+        print(f"runpod-worker-comfy - processing {filename} at {local_file_path}")
+        
+        if not os.path.exists(local_file_path):
+            error_msg = f"File not found: {local_file_path}"
+            print(f"runpod-worker-comfy - ERROR: {error_msg}")
+            result_files.append({
+                "filename": filename,
+                "error": error_msg,
+                "status": "error"
+            })
+            continue
+        
+        try:
+            if use_s3:
+                # Upload to S3
+                file_url = rp_upload.upload_image(job_id, local_file_path)
+                result_files.append({
+                    "filename": filename,
+                    "url": file_url,
+                    "type": file_info.get("type"),
+                    "format": file_info.get("format"),
+                    "status": "success"
+                })
+                print(f"runpod-worker-comfy - ✓ {filename} uploaded to S3")
+            else:
+                # Encode as base64
+                file_base64 = base64_encode(local_file_path)
+                result_files.append({
+                    "filename": filename,
+                    "data": file_base64,
+                    "type": file_info.get("type"),
+                    "format": file_info.get("format"),
+                    "status": "success"
+                })
+                print(f"runpod-worker-comfy - ✓ {filename} encoded as base64")
+                
+        except Exception as e:
+            error_msg = f"Failed to process {filename}: {str(e)}"
+            print(f"runpod-worker-comfy - ERROR: {error_msg}")
+            result_files.append({
+                "filename": filename,
+                "error": error_msg,
+                "status": "error"
+            })
+    
+    # Check if all files failed
+    successful_files = [f for f in result_files if f.get("status") == "success"]
+    
+    if not successful_files:
+        return {
+            "status": "error",
+            "message": "All output files failed to process",
+            "files": result_files
+        }
+    
+    # Return results (backward compatible with single file workflow)
+    first_success = successful_files[0]
+    return {
+        "status": "success",
+        "message": first_success.get("url") or first_success.get("data"),
+        "files": result_files
+    }
 
 
 def handler(job):

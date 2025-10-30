@@ -74,7 +74,7 @@
   WORKDIR /comfyui
   
   # Create necessary directories for models
-  RUN mkdir -p models/loras models/checkpoints models/vae models/text_encoders models/diffusion_models models/clip models/clip_vision models/upscale_models
+  RUN mkdir -p models/loras models/checkpoints models/vae models/text_encoders models/diffusion_models models/clip models/clip_vision models/upscale_models models/diffueraser
   
     # Download WAN 2.1 if MODEL_TYPE = Wan
     RUN if [ "$MODEL_TYPE" = "flux1-dev" ]; then \
@@ -149,7 +149,9 @@
     aria2c -x16 -s16 -d models/upscale_models -o 4x_NMKD-Siax_200k.pth \
       https://huggingface.co/uwg/upscaler/resolve/main/ESRGAN/4x_NMKD-Siax_200k.pth & \
     aria2c -x16 -s16 -d models/upscale_models -o RealESRGAN_x4plus.pth \
-      https://huggingface.co/ai-forever/Real-ESRGAN/resolve/main/RealESRGAN_x4plus.pth & \
+      https://huggingface.co/lllyasviel/Annotators/resolve/main/RealESRGAN_x4plus.pth & \
+    aria2c -x16 -s16 -d models/diffueraser -o diffusion_pytorch_model.safetensors \
+      https://huggingface.co/lixiaowen/diffuEraser/resolve/main/brushnet/diffusion_pytorch_model.safetensors & \
     wait; \
   fi
 
