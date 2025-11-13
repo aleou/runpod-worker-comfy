@@ -191,7 +191,7 @@
 
 
   # ------------ correctif SSL pour Let’s Encrypt R11 ----------
-  RUN pip install --no-cache-dir --upgrade certifi urllib3 botocore boto3 awscli
+  RUN pip install --no-cache-dir --upgrade certifi urllib3 botocore boto3 awscli soundfile
   # ------------------------------------------------------------
   
   # Final command

@@ -37,10 +37,6 @@
             "hash": "8923bd836bdab8b7bbdf4ed104b7d045e70c66e2",
             "disabled": false
         },
-        "https://github.com/jamesWalker55/comfyui-various": {
-            "hash": "5bd85aaf7616878471469c4ec7e11bbd0cef3bf2",
-            "disabled": false
-        },
         "https://github.com/piscesbody/ComfyUI-Upscale-CUDAspeed": {
             "hash": "b21ee56e4b195203cc07d66444725b3f6397b9f3",
             "disabled": false
