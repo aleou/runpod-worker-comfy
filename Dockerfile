@@ -154,6 +154,8 @@
       https://huggingface.co/uwg/upscaler/resolve/main/ESRGAN/4x_NMKD-Siax_200k.pth & \
     aria2c -x16 -s16 -d models/upscale_models -o RealESRGAN_x4plus.pth \
       https://huggingface.co/lllyasviel/Annotators/resolve/main/RealESRGAN_x4plus.pth & \
+    aria2c -x16 -s16 -d models/upscale_models -o RealESRGAN_x2plus.pth \
+      https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth & \
     aria2c -x16 -s16 -d models/diffueraser -o diffusion_pytorch_model.safetensors \
       https://huggingface.co/lixiaowen/diffuEraser/resolve/main/brushnet/diffusion_pytorch_model.safetensors & \
     wait; \

@@ -17,8 +17,12 @@
             "hash": "23f4602191f5e15040f6bf5079ec5dd4ebd347a5",
             "disabled": false
         },
+        "https://github.com/kijai/ComfyUI-WanVideoWrapper.git": {
+            "hash": "b52e5b92bdc218ecb6e959a5d568eb46c0bae41d\n",
+            "disabled": false
+        },
         "https://github.com/smthemex/ComfyUI_DiffuEraser": {
-            "hash": "54ed7ddd3276e1d87d96ce4b3eb712b6d2bf6b61",
+            "hash": "ad095ba6c1a1592410631ccb2555c7639298e17c",
             "disabled": false
         },
         "https://github.com/chflame163/ComfyUI_LayerStyle_Advance": {
@@ -26,23 +30,27 @@
             "disabled": false
         },
         "https://github.com/kijai/ComfyUI-KJNodes": {
-            "hash": "5dacc975141b531ae37a673354902984283d6703",
+            "hash": "6c996e1877db08c7de020ee14421dd28d7574ec2",
             "disabled": false
         },
         "https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite": {
-            "hash": "8550981384301e9bc5bfea83e5c2c75258102593",
+            "hash": "8923bd836bdab8b7bbdf4ed104b7d045e70c66e2",
             "disabled": false
         },
-        "https://github.com/kijai/ComfyUI-WanVideoWrapper.git": {
-            "hash": "b52e5b92bdc218ecb6e959a5d568eb46c0bae41d\n",
-            "disabled": true
+        "https://github.com/jamesWalker55/comfyui-various": {
+            "hash": "5bd85aaf7616878471469c4ec7e11bbd0cef3bf2",
+            "disabled": false
+        },
+        "https://github.com/piscesbody/ComfyUI-Upscale-CUDAspeed": {
+            "hash": "b21ee56e4b195203cc07d66444725b3f6397b9f3",
+            "disabled": false
         }
     },
     "cnr_custom_nodes": {
-        "seedvr2_videoupscaler": "2.0.1",
         "rgthree-comfy": "1.0.2510052058",
         "comfyui-frame-interpolation": "1.0.7",
-        "comfyui_essentials_mb": "1.1.1"
+        "comfyui_essentials_mb": "1.1.1",
+        "seedvr2_videoupscaler": "2.0.1"
     },
     "file_custom_nodes": [
         {
@@ -76,7 +84,7 @@
         "async-lru==2.0.5": "",
         "attrs==25.4.0": "",
         "av==16.0.1": "",
-        "awscli==1.42.62": "",
+        "awscli==1.42.65": "",
         "babel==2.17.0": "",
         "backoff==2.2.1": "",
         "backports-zstd==1.0.0": "",
@@ -87,8 +95,8 @@
         "bleach==6.2.0": "",
         "blend-modes==2.2.0": "",
         "blind-watermark==0.4.4": "",
-        "boto3==1.40.62": "",
-        "botocore==1.40.62": "",
+        "boto3==1.40.65": "",
+        "botocore==1.40.65": "",
         "brotli==1.1.0": "",
         "cachetools==6.2.1": "",
         "certifi==2025.10.5": "",
@@ -246,10 +254,8 @@
         "onnxruntime==1.23.2": "",
         "open-clip-torch==3.2.0": "",
         "openai==2.6.1": "",
-        "opencv-contrib-python==4.12.0.88": "",
         "opencv-contrib-python-headless==4.12.0.88": "",
         "opencv-python==4.12.0.88": "",
-        "opencv-python-headless==4.11.0.86": "",
         "opt-einsum==3.4.0": "",
         "orjson==3.11.4": "",
         "overrides==7.7.0": "",
