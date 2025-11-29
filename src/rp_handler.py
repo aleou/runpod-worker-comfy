@@ -8,6 +8,7 @@ import os
 import requests
 import base64
 from io import BytesIO
+import traceback
 
 # Time to wait between API check attempts in milliseconds
 COMFY_API_AVAILABLE_INTERVAL_MS = 50
@@ -347,6 +348,12 @@ def process_output_images(outputs, job_id):
     result_files = []
     use_s3 = bool(os.environ.get("BUCKET_ENDPOINT_URL"))
     bucket_name = os.environ.get("BUCKET_NAME", "")
+    bucket_endpoint = os.environ.get("BUCKET_ENDPOINT_URL", "")
+    print(
+        "runpod-worker-comfy - output handling config | "
+        f"use_s3={use_s3} bucket_name={bucket_name if bucket_name else '[default]'} "
+        f"endpoint={bucket_endpoint if bucket_endpoint else '[default]'}"
+    )
     
     for file_info in output_files:
         file_path = file_info["path"]
@@ -367,9 +374,19 @@ def process_output_images(outputs, job_id):
         
         try:
             if use_s3:
+                file_size = os.path.getsize(local_file_path)
+                print(
+                    "runpod-worker-comfy - uploading to S3 | "
+                    f"file={filename} size={file_size}B bucket={bucket_name if bucket_name else '[default]'}"
+                )
+
                 # Upload to S3
                 if bucket_name:
-                    file_url = rp_upload.upload_image(job_id, local_file_path, bucket_name=bucket_name)
+                    file_url = rp_upload.upload_image(
+                        job_id,
+                        local_file_path,
+                        bucket_name=bucket_name,
+                    )
                 else:
                     file_url = rp_upload.upload_image(job_id, local_file_path)
                 result_files.append({
@@ -395,6 +412,7 @@ def process_output_images(outputs, job_id):
         except Exception as e:
             error_msg = f"Failed to process {filename}: {str(e)}"
             print(f"runpod-worker-comfy - ERROR: {error_msg}")
+            print(traceback.format_exc())
             result_files.append({
                 "filename": filename,
                 "error": error_msg,
