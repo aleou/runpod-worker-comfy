@@ -349,10 +349,21 @@ def process_output_images(outputs, job_id):
     use_s3 = bool(os.environ.get("BUCKET_ENDPOINT_URL"))
     bucket_name = os.environ.get("BUCKET_NAME", "")
     bucket_endpoint = os.environ.get("BUCKET_ENDPOINT_URL", "")
+    aws_key = os.environ.get("AWS_ACCESS_KEY_ID", "") or os.environ.get("BUCKET_ACCESS_KEY_ID", "")
+    aws_secret_present = bool(os.environ.get("AWS_SECRET_ACCESS_KEY") or os.environ.get("BUCKET_SECRET_ACCESS_KEY"))
+    aws_region = os.environ.get("BUCKET_REGION") or os.environ.get("AWS_REGION") or ""
+    s3_addressing = os.environ.get("S3_ADDRESSING_STYLE") or os.environ.get("AWS_S3_ADDRESSING_STYLE") or ""
+    s3_signature = os.environ.get("S3_SIGNATURE_VERSION") or os.environ.get("AWS_S3_SIGNATURE_VERSION") or ""
+
     print(
         "runpod-worker-comfy - output handling config | "
         f"use_s3={use_s3} bucket_name={bucket_name if bucket_name else '[default]'} "
-        f"endpoint={bucket_endpoint if bucket_endpoint else '[default]'}"
+        f"endpoint={bucket_endpoint if bucket_endpoint else '[default]'} "
+        f"region={aws_region if aws_region else '[default]'} "
+        f"addressing_style={s3_addressing if s3_addressing else '[default]'} "
+        f"signature_version={s3_signature if s3_signature else '[default]'} "
+        f"aws_key={aws_key[:4] + '***' if aws_key else '[missing]'} "
+        f"aws_secret_set={aws_secret_present}"
     )
     
     for file_info in output_files:
