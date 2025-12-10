@@ -156,8 +156,8 @@
       https://github.com/Kim2091/Kim2091-Models/releases/download/2x-AnimeSharpV4/2x-AnimeSharpV4_Fast_RCAN_PU.safetensors & \
     aria2c -x16 -s16 -d models/upscale_models -o RealESRGAN_x2plus.pth \
       https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth & \
-    aria2c -x16 -s16 -d models/diffueraser -o diffusion_pytorch_model.safetensors \
-      https://huggingface.co/lixiaowen/diffuEraser/resolve/main/brushnet/diffusion_pytorch_model.safetensors & \
+    aria2c -x16 -s16 -d models/upscale_models -o 2xNomosUni_esrgan_multijpg.pth \
+      https://huggingface.co/Kyca/KycasFiles/resolve/main/2xNomosUni_esrgan_multijpg.pth & \
     wait; \
   fi
 
