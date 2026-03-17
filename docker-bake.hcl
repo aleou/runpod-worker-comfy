@@ -23,7 +23,7 @@ target "base" {
   dockerfile = "Dockerfile"
   target = "base"
   platforms = ["linux/amd64"]
-  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:${RELEASE_VERSION}-base"]
+  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:base-${RELEASE_VERSION}"]
 }
 
 target "sdxl" {
@@ -33,7 +33,7 @@ target "sdxl" {
   args = {
     MODEL_TYPE = "sdxl"
   }
-  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:${RELEASE_VERSION}-sdxl"]
+  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:sdxl-${RELEASE_VERSION}"]
   inherits = ["base"]
 }
 
@@ -45,7 +45,7 @@ target "sd3" {
     MODEL_TYPE = "sd3"
     HUGGINGFACE_ACCESS_TOKEN = "${HUGGINGFACE_ACCESS_TOKEN}"
   }
-  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:${RELEASE_VERSION}-sd3"]
+  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:sd3-${RELEASE_VERSION}"]
   inherits = ["base"]
 }
 
@@ -57,7 +57,7 @@ target "flux1-schnell" {
     MODEL_TYPE = "flux1-schnell"
     HUGGINGFACE_ACCESS_TOKEN = "${HUGGINGFACE_ACCESS_TOKEN}"
   }
-  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:${RELEASE_VERSION}-flux1-schnell"]
+  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:flux1-schnell-${RELEASE_VERSION}"]
   inherits = ["base"]
 }
 
@@ -69,7 +69,7 @@ target "Qwen-image" {
     MODEL_TYPE = "Qwen-image"
     HUGGINGFACE_ACCESS_TOKEN = "${HUGGINGFACE_ACCESS_TOKEN}"
   }
-  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:${RELEASE_VERSION}-Qwen-image"]
+  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:Qwen-image-${RELEASE_VERSION}"]
   inherits = ["base"]
 }
 
@@ -81,7 +81,7 @@ target "flux1-dev" {
     MODEL_TYPE = "flux1-dev"
     HUGGINGFACE_ACCESS_TOKEN = "${HUGGINGFACE_ACCESS_TOKEN}"
   }
-  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:${RELEASE_VERSION}-flux1-dev"]
+  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:flux1-dev-${RELEASE_VERSION}"]
   inherits = ["base"]
 }
 
@@ -93,8 +93,8 @@ target "wan2-1" {
     MODEL_TYPE = "Wan"
     HUGGINGFACE_ACCESS_TOKEN = "${HUGGINGFACE_ACCESS_TOKEN}"
   }
-  # Tag par exemple : <repo>/<img>:3.4.0-wan2.1
-  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:${RELEASE_VERSION}-wan2.1"]
+  # Tag par exemple : <repo>/<img>:wan2.1-3.4.0
+  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:wan2.1-${RELEASE_VERSION}"]
   inherits = ["base"]
 }
 
@@ -106,7 +106,7 @@ target "hunyuan" {
     MODEL_TYPE = "Hunyuhan"
     HUGGINGFACE_ACCESS_TOKEN = "${HUGGINGFACE_ACCESS_TOKEN}"
   }
-  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:${RELEASE_VERSION}-hunyuan"]
+  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:hunyuan-${RELEASE_VERSION}"]
   inherits = ["base"]
 }
 
@@ -117,7 +117,7 @@ target "upscale" {
   args = {
     MODEL_TYPE = "upscale"
   }
-  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:${RELEASE_VERSION}-upscale"]
+  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:upscale-${RELEASE_VERSION}"]
   inherits = ["base"]
 }
 
@@ -128,6 +128,6 @@ target "watermark" {
   args = {
     MODEL_TYPE = "watermark"
   }
-  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:${RELEASE_VERSION}-watermark"]
+  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:watermark-${RELEASE_VERSION}"]
   inherits = ["base"]
 }

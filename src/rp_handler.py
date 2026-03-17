@@ -24,6 +24,21 @@ COMFY_HOST = "127.0.0.1:8188"
 REFRESH_WORKER = os.environ.get("REFRESH_WORKER", "false").lower() == "true"
 
 
+def get_clean_env(name, default=""):
+    """
+    Return an environment variable with surrounding whitespace and matching quotes removed.
+    """
+    value = os.environ.get(name, default)
+    if not isinstance(value, str):
+        return default
+
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+        value = value[1:-1].strip()
+
+    return value
+
+
 def validate_input(job_input):
     """
     Validates the input for the handler function.
@@ -345,8 +360,30 @@ def process_output_images(outputs, job_id):
     
     # Process and upload/encode each file
     result_files = []
-    use_s3 = bool(os.environ.get("BUCKET_ENDPOINT_URL"))
-    bucket_name = os.environ.get("BUCKET_NAME", "")
+    bucket_endpoint_url = get_clean_env("BUCKET_ENDPOINT_URL")
+    bucket_name = get_clean_env("BUCKET_NAME")
+    bucket_access_key_id = get_clean_env("BUCKET_ACCESS_KEY_ID")
+    bucket_secret_access_key = get_clean_env("BUCKET_SECRET_ACCESS_KEY")
+    use_s3 = bool(bucket_endpoint_url)
+
+    if use_s3:
+        os.environ["BUCKET_ENDPOINT_URL"] = bucket_endpoint_url
+        if bucket_name:
+            os.environ["BUCKET_NAME"] = bucket_name
+        if bucket_access_key_id:
+            os.environ["BUCKET_ACCESS_KEY_ID"] = bucket_access_key_id
+        if bucket_secret_access_key:
+            os.environ["BUCKET_SECRET_ACCESS_KEY"] = bucket_secret_access_key
+
+        if not bucket_access_key_id or not bucket_secret_access_key:
+            return {
+                "status": "error",
+                "message": (
+                    "S3 upload is enabled via BUCKET_ENDPOINT_URL but "
+                    "BUCKET_ACCESS_KEY_ID or BUCKET_SECRET_ACCESS_KEY is missing/empty "
+                    "after trimming whitespace and quotes"
+                ),
+            }
     
     for file_info in output_files:
         file_path = file_info["path"]

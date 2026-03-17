@@ -187,9 +187,6 @@ class TestRunpodWorkerComfy(unittest.TestCase):
         # Simulate the file existing in the output path
         mock_exists.return_value = True
 
-        # When AWS credentials are wrong or missing, upload_image should return 'simulated_uploaded/...'
-        mock_upload_image.return_value = "simulated_uploaded/image.png"
-
         outputs = {
             "node_id": {"images": [{"filename": "ComfyUI_00001_.png", "subfolder": ""}]}
         }
@@ -197,9 +194,43 @@ class TestRunpodWorkerComfy(unittest.TestCase):
 
         result = rp_handler.process_output_images(outputs, job_id)
 
-        # Check if the image was saved to the 'simulated_uploaded' directory
-        self.assertIn("simulated_uploaded", result["message"])
+        self.assertEqual(result["status"], "error")
+        self.assertIn("BUCKET_ACCESS_KEY_ID", result["message"])
+        mock_upload_image.assert_not_called()
+
+    @patch("rp_handler.os.path.exists")
+    @patch("rp_handler.rp_upload.upload_image")
+    @patch.dict(
+        os.environ,
+        {
+            "COMFY_OUTPUT_PATH": RUNPOD_WORKER_COMFY_TEST_RESOURCES_IMAGES,
+            "BUCKET_ENDPOINT_URL": "  \"http://example.com\"  ",
+            "BUCKET_NAME": "  \"bucket-name\"  ",
+            "BUCKET_ACCESS_KEY_ID": "  \"key123\"  ",
+            "BUCKET_SECRET_ACCESS_KEY": "  \"secret123\"  ",
+        },
+    )
+    def test_bucket_env_vars_are_trimmed_before_upload(
+        self, mock_upload_image, mock_exists
+    ):
+        mock_exists.return_value = True
+        mock_upload_image.return_value = "http://example.com/uploaded/image.png"
+
+        outputs = {
+            "node_id": {"images": [{"filename": "ComfyUI_00001_.png", "subfolder": "test"}]}
+        }
+        job_id = "123"
+
+        result = rp_handler.process_output_images(outputs, job_id)
+
         self.assertEqual(result["status"], "success")
+        self.assertEqual(os.environ["BUCKET_ENDPOINT_URL"], "http://example.com")
+        self.assertEqual(os.environ["BUCKET_NAME"], "bucket-name")
+        self.assertEqual(os.environ["BUCKET_ACCESS_KEY_ID"], "key123")
+        self.assertEqual(os.environ["BUCKET_SECRET_ACCESS_KEY"], "secret123")
+        mock_upload_image.assert_called_once_with(
+            job_id, "./test_resources/images/test/ComfyUI_00001_.png", bucket_name="bucket-name"
+        )
 
     @patch("rp_handler.requests.post")
     def test_upload_images_successful(self, mock_post):
