@@ -8,6 +8,7 @@ import os
 import requests
 import base64
 from io import BytesIO
+import traceback
 
 # Time to wait between API check attempts in milliseconds
 COMFY_API_AVAILABLE_INTERVAL_MS = 50
@@ -364,6 +365,11 @@ def process_output_images(outputs, job_id):
     bucket_name = get_clean_env("BUCKET_NAME")
     bucket_access_key_id = get_clean_env("BUCKET_ACCESS_KEY_ID")
     bucket_secret_access_key = get_clean_env("BUCKET_SECRET_ACCESS_KEY")
+    aws_access_key_id = get_clean_env("AWS_ACCESS_KEY_ID")
+    aws_secret_access_key = get_clean_env("AWS_SECRET_ACCESS_KEY")
+    aws_region = get_clean_env("BUCKET_REGION") or get_clean_env("AWS_REGION")
+    s3_addressing = get_clean_env("S3_ADDRESSING_STYLE") or get_clean_env("AWS_S3_ADDRESSING_STYLE")
+    s3_signature = get_clean_env("S3_SIGNATURE_VERSION") or get_clean_env("AWS_S3_SIGNATURE_VERSION")
     use_s3 = bool(bucket_endpoint_url)
 
     if use_s3:
@@ -384,6 +390,19 @@ def process_output_images(outputs, job_id):
                     "after trimming whitespace and quotes"
                 ),
             }
+
+    active_access_key = aws_access_key_id or bucket_access_key_id
+    active_secret_present = bool(aws_secret_access_key or bucket_secret_access_key)
+    print(
+        "runpod-worker-comfy - output handling config | "
+        f"use_s3={use_s3} bucket_name={bucket_name if bucket_name else '[default]'} "
+        f"endpoint={bucket_endpoint_url if bucket_endpoint_url else '[default]'} "
+        f"region={aws_region if aws_region else '[default]'} "
+        f"addressing_style={s3_addressing if s3_addressing else '[default]'} "
+        f"signature_version={s3_signature if s3_signature else '[default]'} "
+        f"aws_key={active_access_key[:4] + '***' if active_access_key else '[missing]'} "
+        f"aws_secret_set={active_secret_present}"
+    )
     
     for file_info in output_files:
         file_path = file_info["path"]
@@ -404,9 +423,19 @@ def process_output_images(outputs, job_id):
         
         try:
             if use_s3:
+                file_size = os.path.getsize(local_file_path)
+                print(
+                    "runpod-worker-comfy - uploading to S3 | "
+                    f"file={filename} size={file_size}B bucket={bucket_name if bucket_name else '[default]'}"
+                )
+
                 # Upload to S3
                 if bucket_name:
-                    file_url = rp_upload.upload_image(job_id, local_file_path, bucket_name=bucket_name)
+                    file_url = rp_upload.upload_image(
+                        job_id,
+                        local_file_path,
+                        bucket_name=bucket_name,
+                    )
                 else:
                     file_url = rp_upload.upload_image(job_id, local_file_path)
                 result_files.append({
@@ -432,6 +461,7 @@ def process_output_images(outputs, job_id):
         except Exception as e:
             error_msg = f"Failed to process {filename}: {str(e)}"
             print(f"runpod-worker-comfy - ERROR: {error_msg}")
+            print(traceback.format_exc())
             result_files.append({
                 "filename": filename,
                 "error": error_msg,
