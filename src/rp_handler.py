@@ -286,6 +286,62 @@ def get_history(prompt_id):
         return json.loads(response.read())
 
 
+def extract_history_execution_error(history_entry):
+    """
+    Extract a ComfyUI execution error from a history entry if one exists.
+    """
+    if not isinstance(history_entry, dict):
+        return None
+
+    status = history_entry.get("status") or {}
+    messages = status.get("messages") or []
+
+    for message in messages:
+        if not isinstance(message, (list, tuple)) or len(message) < 2:
+            continue
+
+        event_type, payload = message[0], message[1]
+        if not isinstance(payload, dict):
+            continue
+
+        exception_message = payload.get("exception_message") or payload.get("error")
+        if event_type == "execution_error" or exception_message:
+            node_type = payload.get("node_type")
+            node_id = payload.get("node_id")
+            formatted_message = exception_message or "ComfyUI execution error"
+
+            if node_type or node_id:
+                formatted_message = (
+                    f"{formatted_message} "
+                    f"(node_id={node_id if node_id is not None else 'unknown'}, "
+                    f"node_type={node_type if node_type else 'unknown'})"
+                )
+
+            return {
+                "message": formatted_message,
+                "details": payload,
+            }
+
+    if status.get("status_str") == "error":
+        return {
+            "message": "ComfyUI execution failed",
+            "details": status,
+        }
+
+    return None
+
+
+def history_entry_completed(history_entry):
+    """
+    Return True when ComfyUI history reports the prompt as completed.
+    """
+    if not isinstance(history_entry, dict):
+        return False
+
+    status = history_entry.get("status") or {}
+    return bool(status.get("completed"))
+
+
 def base64_encode(img_path):
     """
     Returns base64 encoded image.
@@ -545,10 +601,28 @@ def handler(job):
     try:
         while retries < COMFY_POLLING_MAX_RETRIES:
             history = get_history(prompt_id)
+            history_entry = history.get(prompt_id, {})
+            execution_error = extract_history_execution_error(history_entry)
 
             # Exit the loop if we have found the history
-            if prompt_id in history and history[prompt_id].get("outputs"):
+            if prompt_id in history and history_entry.get("outputs"):
                 break
+            if execution_error:
+                print(f"runpod-worker-comfy - ERROR: {execution_error['message']}")
+                return {
+                    "status": "error",
+                    "message": execution_error["message"],
+                    "details": execution_error["details"],
+                    "refresh_worker": REFRESH_WORKER,
+                }
+            if prompt_id in history and history_entry_completed(history_entry):
+                print("runpod-worker-comfy - ERROR: workflow completed without outputs")
+                return {
+                    "status": "error",
+                    "message": "Workflow completed without outputs",
+                    "details": history_entry.get("status", {}),
+                    "refresh_worker": REFRESH_WORKER,
+                }
             else:
                 # Wait before trying again
                 time.sleep(COMFY_POLLING_INTERVAL_MS / 1000)

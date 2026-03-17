@@ -263,3 +263,83 @@ class TestRunpodWorkerComfy(unittest.TestCase):
 
         self.assertEqual(len(responses), 3)
         self.assertEqual(responses["status"], "error")
+
+    def test_extract_history_execution_error(self):
+        history_entry = {
+            "status": {
+                "completed": True,
+                "status_str": "error",
+                "messages": [
+                    [
+                        "execution_error",
+                        {
+                            "exception_message": "Allocation on device",
+                            "node_id": "42",
+                            "node_type": "UpscaleNode",
+                        },
+                    ]
+                ],
+            }
+        }
+
+        result = rp_handler.extract_history_execution_error(history_entry)
+
+        self.assertIsNotNone(result)
+        self.assertIn("Allocation on device", result["message"])
+        self.assertIn("node_id=42", result["message"])
+        self.assertEqual(result["details"]["node_type"], "UpscaleNode")
+
+    @patch("rp_handler.queue_workflow")
+    @patch("rp_handler.get_history")
+    @patch("rp_handler.check_server")
+    def test_handler_returns_error_when_comfy_execution_fails(
+        self, mock_check_server, mock_get_history, mock_queue_workflow
+    ):
+        mock_queue_workflow.return_value = {"prompt_id": "123"}
+        mock_get_history.return_value = {
+            "123": {
+                "status": {
+                    "completed": True,
+                    "status_str": "error",
+                    "messages": [
+                        [
+                            "execution_error",
+                            {
+                                "exception_message": "Allocation on device",
+                                "node_id": "42",
+                                "node_type": "UpscaleNode",
+                            },
+                        ]
+                    ],
+                }
+            }
+        }
+
+        job = {"id": "job-1", "input": {"workflow": {"1": {"class_type": "TestNode"}}}}
+        result = rp_handler.handler(job)
+
+        self.assertEqual(result["status"], "error")
+        self.assertIn("Allocation on device", result["message"])
+
+    @patch("rp_handler.queue_workflow")
+    @patch("rp_handler.get_history")
+    @patch("rp_handler.check_server")
+    def test_handler_returns_error_when_workflow_completes_without_outputs(
+        self, mock_check_server, mock_get_history, mock_queue_workflow
+    ):
+        mock_queue_workflow.return_value = {"prompt_id": "123"}
+        mock_get_history.return_value = {
+            "123": {
+                "status": {
+                    "completed": True,
+                    "status_str": "success",
+                    "messages": [],
+                }
+            }
+        }
+
+        job = {"id": "job-1", "input": {"workflow": {"1": {"class_type": "TestNode"}}}}
+        result = rp_handler.handler(job)
+
+        self.assertEqual(result["status"], "error")
+        self.assertEqual(result["message"], "Workflow completed without outputs")
