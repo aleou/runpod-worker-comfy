@@ -7,7 +7,7 @@ variable "DOCKERHUB_IMG" {
 }
 
 variable "RELEASE_VERSION" {
-  default = "5.12"
+  default = "5.13"
 }
 
 variable "HUGGINGFACE_ACCESS_TOKEN" {
@@ -73,15 +73,15 @@ target "Qwen-image" {
   inherits = ["base"]
 }
 
-target "flux1-dev" {
+target "flux2-dev" {
   context = "."
   dockerfile = "Dockerfile"
   target = "final"
   args = {
-    MODEL_TYPE = "flux1-dev"
+    MODEL_TYPE = "flux2-dev"
     HUGGINGFACE_ACCESS_TOKEN = "${HUGGINGFACE_ACCESS_TOKEN}"
   }
-  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:flux1-dev-${RELEASE_VERSION}"]
+  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:flux2-dev-${RELEASE_VERSION}"]
   inherits = ["base"]
 }
 

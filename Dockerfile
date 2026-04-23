@@ -81,19 +81,19 @@
   RUN mkdir -p models/loras models/checkpoints models/vae models/text_encoders models/diffusion_models models/clip models/clip_vision models/upscale_models models/diffueraser models/DiffuEraser/diffueraser models/DiffuEraser/propainter
   
     # Download WAN 2.1 if MODEL_TYPE = Wan
-    RUN if [ "$MODEL_TYPE" = "flux1-dev" ]; then \
+    RUN if [ "$MODEL_TYPE" = "flux2-dev" ]; then \
     aria2c -x16 -s16 -d models/vae -o flux2-vae.safetensors \
       https://huggingface.co/Comfy-Org/flux2-dev/resolve/main/split_files/vae/flux2-vae.safetensors & \
     aria2c -x16 -s16 -d models/diffusion_models -o flux2-dev-Q5_K_S.gguf \
       https://huggingface.co/city96/FLUX.2-dev-gguf/resolve/main/flux2-dev-Q5_K_S.gguf & \
-    aria2c -x16 -s16 -d models/clip -o t5-v1_1-xxl-encoder-Q5_K_S.gguf \
-      https://huggingface.co/city96/t5-v1_1-xxl-encoder-gguf/resolve/main/t5-v1_1-xxl-encoder-Q5_K_S.gguf & \
-    aria2c -x16 -s16 -d models/clip -o ViT-L-14-TEXT-detail-improved-hiT-GmP-TE-only-HF.safetensors \
-      https://huggingface.co/zer0int/CLIP-GmP-ViT-L-14/resolve/main/ViT-L-14-TEXT-detail-improved-hiT-GmP-TE-only-HF.safetensors & \
     aria2c -x16 -s16 -d models/upscale_models -o 4x_foolhardy_Remacri.pth \
       https://huggingface.co/FacehugmanIII/4x_foolhardy_Remacri/resolve/main/4x_foolhardy_Remacri.pth & \
     aria2c -x16 -s16 -d models/upscale_models -o 4x_NMKD-Siax_200k.pth \
       https://huggingface.co/uwg/upscaler/resolve/main/ESRGAN/4x_NMKD-Siax_200k.pth & \
+    aria2c -x16 -s16 -d models/text_encoders -o Mistral-Small-3.2-24B-Instruct-2506-Q5_K_M.gguf \
+      https://huggingface.co/unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF/resolve/main/Mistral-Small-3.2-24B-Instruct-2506-Q5_K_M.gguf & \
+    aria2c -x16 -s16 -d models/text_encoders -o Mistral-Small-3.2-24B-Instruct-2506-Q5_K_M.gguf \
+      https://huggingface.co/unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF/resolve/main/Mistral-Small-3.2-24B-Instruct-2506-Q5_K_M.gguf & \
     wait; \
   fi
 
@@ -125,8 +125,8 @@
       https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors & \
       aria2c -x16 -s16 -d models/clip -o open-clip-xlm-roberta-large-vit-huge-14_visual_fp32.safetensors \
         https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/open-clip-xlm-roberta-large-vit-huge-14_visual_fp32.safetensors & \
-      aria2c -x16 -s16 -d models/upscale_models -o 4x_foolhardy_Remacri.pth \
-        https://huggingface.co/FacehugmanIII/4x_foolhardy_Remacri/resolve/main/4x_foolhardy_Remacri.pth & \
+      aria2c -x16 -s16 -d models/loras -o Flux_2-Turbo-LoRA_comfyui.safetensors \
+        https://huggingface.co/ByteZSzn/Flux.2-Turbo-ComfyUI/resolve/main/Flux_2-Turbo-LoRA_comfyui.safetensors & \
       wait; \
     fi
   # Download Hunyuhan models if MODEL_TYPE = Hunyuhan https://huggingface.co/Kijai/HunyuanVideo_comfy/resolve/main/hunyuan_video_FastVideo_720_fp8_e4m3fn.safetensors
