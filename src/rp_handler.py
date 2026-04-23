@@ -9,6 +9,14 @@ import requests
 import base64
 from io import BytesIO
 import traceback
+import mimetypes
+
+try:
+    import boto3
+    from botocore.config import Config as BotoConfig
+except ImportError:
+    boto3 = None
+    BotoConfig = None
 
 # Time to wait between API check attempts in milliseconds
 COMFY_API_AVAILABLE_INTERVAL_MS = 50
@@ -357,6 +365,65 @@ def base64_encode(img_path):
         return f"{encoded_string}"
 
 
+def get_s3_client():
+    """
+    Build a boto3 S3 client honoring path-style and signature configs for GCS/Firebase.
+    """
+    if not boto3 or not BotoConfig:
+        print("runpod-worker-comfy - WARNING: boto3 not available, cannot upload to S3")
+        return None
+
+    endpoint = os.environ.get("BUCKET_ENDPOINT_URL") or os.environ.get("AWS_S3_ENDPOINT_URL")
+    access_key = os.environ.get("BUCKET_ACCESS_KEY_ID") or os.environ.get("AWS_ACCESS_KEY_ID")
+    secret_key = os.environ.get("BUCKET_SECRET_ACCESS_KEY") or os.environ.get("AWS_SECRET_ACCESS_KEY")
+    region = os.environ.get("BUCKET_REGION") or os.environ.get("AWS_REGION")
+    signature_version = os.environ.get("S3_SIGNATURE_VERSION") or os.environ.get("AWS_S3_SIGNATURE_VERSION") or "s3v4"
+    addressing_style = os.environ.get("S3_ADDRESSING_STYLE") or os.environ.get("AWS_S3_ADDRESSING_STYLE") or "path"
+
+    if not endpoint or not access_key or not secret_key:
+        print("runpod-worker-comfy - WARNING: missing S3 endpoint or credentials, skipping custom S3 client")
+        return None
+
+    cfg = BotoConfig(
+        signature_version=signature_version,
+        s3={"addressing_style": addressing_style},
+        retries={"max_attempts": 3, "mode": "standard"},
+    )
+
+    return boto3.client(
+        "s3",
+        endpoint_url=endpoint,
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key,
+        region_name=region,
+        config=cfg,
+    )
+
+
+def upload_file_s3(local_file_path, job_id, bucket_name):
+    """
+    Upload a file to S3-compatible storage using custom boto config (path-style for GCS).
+    """
+    client = get_s3_client()
+    if client is None:
+        return None
+
+    filename = os.path.basename(local_file_path)
+    key = f"{job_id}/{filename}"
+
+    content_type, _ = mimetypes.guess_type(filename)
+    extra_args = {"ContentType": content_type} if content_type else {}
+
+    with open(local_file_path, "rb") as f:
+        client.put_object(Bucket=bucket_name, Key=key, Body=f, **extra_args)
+
+    return client.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": bucket_name, "Key": key},
+        ExpiresIn=604800,
+    )
+
+
 def process_output_images(outputs, job_id):
     """
     Process outputs from ComfyUI workflow execution and upload to S3 or return as base64.
@@ -485,15 +552,10 @@ def process_output_images(outputs, job_id):
                     f"file={filename} size={file_size}B bucket={bucket_name if bucket_name else '[default]'}"
                 )
 
-                # Upload to S3
-                if bucket_name:
-                    file_url = rp_upload.upload_image(
-                        job_id,
-                        local_file_path,
-                        bucket_name=bucket_name,
-                    )
-                else:
-                    file_url = rp_upload.upload_image(job_id, local_file_path)
+                # Upload to S3 (custom client forces path-style for GCS/Firebase)
+                file_url = upload_file_s3(local_file_path, job_id, bucket_name or "")
+                if not file_url:
+                    raise RuntimeError("S3 upload failed (client unavailable)")
                 result_files.append({
                     "filename": filename,
                     "url": file_url,

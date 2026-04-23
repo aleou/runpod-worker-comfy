@@ -20,7 +20,7 @@
   RUN pip install --upgrade pip comfy-cli
   
   # Install ComfyUI
-  RUN bash -lc 'set +o pipefail; printf "%s\n" n y | comfy --workspace /comfyui install --nvidia --version 0.3.65; exit ${PIPESTATUS[1]}'
+  RUN bash -lc 'set +o pipefail; printf "%s\n" n y | comfy --workspace /comfyui install --nvidia --version 0.19.3; exit ${PIPESTATUS[1]}'
   RUN comfy tracking disable
   
   # Change working directory to ComfyUI
@@ -82,10 +82,10 @@
   
     # Download WAN 2.1 if MODEL_TYPE = Wan
     RUN if [ "$MODEL_TYPE" = "flux1-dev" ]; then \
-    aria2c -x16 -s16 -d models/vae -o ae.safetensors \
-    https://huggingface.co/lovis93/testllm/resolve/ed9cf1af7465cebca4649157f118e331cf2a084f/ae.safetensors & \
-    aria2c -x16 -s16 -d models/diffusion_models -o flux1-dev-Q5_K_S.gguf \
-      https://huggingface.co/city96/FLUX.1-dev-gguf/resolve/main/flux1-dev-Q5_K_S.gguf & \
+    aria2c -x16 -s16 -d models/vae -o flux2-vae.safetensors \
+      https://huggingface.co/Comfy-Org/flux2-dev/resolve/main/split_files/vae/flux2-vae.safetensors & \
+    aria2c -x16 -s16 -d models/diffusion_models -o flux2-dev-Q5_K_S.gguf \
+      https://huggingface.co/city96/FLUX.2-dev-gguf/resolve/main/flux2-dev-Q5_K_S.gguf & \
     aria2c -x16 -s16 -d models/clip -o t5-v1_1-xxl-encoder-Q5_K_S.gguf \
       https://huggingface.co/city96/t5-v1_1-xxl-encoder-gguf/resolve/main/t5-v1_1-xxl-encoder-Q5_K_S.gguf & \
     aria2c -x16 -s16 -d models/clip -o ViT-L-14-TEXT-detail-improved-hiT-GmP-TE-only-HF.safetensors \
