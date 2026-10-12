@@ -20,8 +20,8 @@ except ImportError:
 
 # Time to wait between API check attempts in milliseconds
 COMFY_API_AVAILABLE_INTERVAL_MS = 50
-# Maximum number of API check attempts
-COMFY_API_AVAILABLE_MAX_RETRIES = 500
+# Maximum number of API check attempts (3600 * 50 ms = 180 s, heavy targets import slowly)
+COMFY_API_AVAILABLE_MAX_RETRIES = int(os.environ.get("COMFY_API_AVAILABLE_MAX_RETRIES", 3600))
 # Time to wait between poll attempts in milliseconds
 COMFY_POLLING_INTERVAL_MS = int(os.environ.get("COMFY_POLLING_INTERVAL_MS", 250))
 # Maximum number of poll attempts
@@ -31,6 +31,19 @@ COMFY_HOST = "127.0.0.1:8188"
 # Enforce a clean state after each job is done
 # see https://docs.runpod.io/docs/handler-additional-controls#refresh-worker
 REFRESH_WORKER = os.environ.get("REFRESH_WORKER", "false").lower() == "true"
+# Refuse to return outputs as base64: fail early when no S3 bucket is configured
+REQUIRE_S3 = os.environ.get("REQUIRE_S3", "false").lower() == "true"
+# Remove the job's input and output files from the container disk once the job is done
+CLEANUP_JOB_FILES = os.environ.get("CLEANUP_JOB_FILES", "true").lower() == "true"
+# Extensions accepted for 'files' written to the ComfyUI input folder
+ALLOWED_INPUT_EXTENSIONS = {
+    ext.strip().lower().lstrip(".")
+    for ext in os.environ.get(
+        "ALLOWED_INPUT_EXTENSIONS",
+        "png,jpg,jpeg,webp,wav,mp3,flac,m4a,mp4,mov,webm",
+    ).split(",")
+    if ext.strip()
+}
 
 
 def get_clean_env(name, default=""):
@@ -46,6 +59,30 @@ def get_clean_env(name, default=""):
         value = value[1:-1].strip()
 
     return value
+
+
+def sanitize_input_filename(name):
+    """
+    Return a safe basename for a file written to the ComfyUI input folder.
+
+    Raises:
+        ValueError: If the name tries to leave the input folder or has an extension
+                    that is not in ALLOWED_INPUT_EXTENSIONS.
+    """
+    if not isinstance(name, str) or not name.strip():
+        raise ValueError("File 'name' must be a non-empty string")
+    if ".." in name:
+        raise ValueError(f"Invalid file name '{name}': '..' is not allowed")
+
+    safe_name = os.path.basename(name.strip().replace("\\", "/"))
+    extension = os.path.splitext(safe_name)[1].lower().lstrip(".")
+    if not safe_name or extension not in ALLOWED_INPUT_EXTENSIONS:
+        raise ValueError(
+            f"Invalid file name '{name}': extension must be one of "
+            f"{', '.join(sorted(ALLOWED_INPUT_EXTENSIONS))}"
+        )
+
+    return safe_name
 
 
 def validate_input(job_input):
@@ -93,10 +130,14 @@ def validate_input(job_input):
             return None, "'files' must be a list"
         
         for file in files:
-            if "name" not in file:
+            if not isinstance(file, dict) or "name" not in file:
                 return None, "Each file must have a 'name' field"
-            if "url" not in file:
-                return None, "Each file must have a 'url' field"
+            if not file.get("url") and not file.get("data"):
+                return None, "Each file must have a 'url' or a 'data' (base64) field"
+            try:
+                sanitize_input_filename(file["name"])
+            except ValueError as e:
+                return None, str(e)
 
     # Return validated data and no error
     return {"workflow": workflow, "images": images, "files": files}, None
@@ -117,7 +158,7 @@ def check_server(url, retries=500, delay=50):
 
     for i in range(retries):
         try:
-            response = requests.get(url)
+            response = requests.get(url, timeout=5)
 
             # If the response status code is 200, the server is up and running
             if response.status_code == 200:
@@ -191,15 +232,16 @@ def upload_images(images):
 
 def download_files_from_urls(files):
     """
-    Download files (images/videos) from URLs and save them to the ComfyUI input folder.
+    Save files (images/audio/videos) to the ComfyUI input folder, from URLs or base64 data.
 
     Args:
         files (list): A list of dictionaries, each containing:
                      - 'name': the filename to save as
-                     - 'url': the URL to download from
+                     - 'url': the URL to download from, or
+                     - 'data': the file content as a base64 encoded string
 
     Returns:
-        dict: Status and details of the download operation.
+        dict: Status and details of the download operation, with the saved 'paths'.
     """
     if not files:
         return {"status": "success", "message": "No files to download", "details": []}
@@ -212,28 +254,45 @@ def download_files_from_urls(files):
 
     responses = []
     download_errors = []
+    saved_paths = []
 
     print(f"runpod-worker-comfy - downloading file(s) from URL(s)")
 
     for file in files:
         name = file["name"]
-        url = file["url"]
-        
+        url = file.get("url")
+
         try:
-            print(f"runpod-worker-comfy - downloading {name} from {url}")
-            
-            # Download the file with a timeout
-            response = requests.get(url, timeout=60, stream=True)
-            response.raise_for_status()
-            
-            # Save the file to the input folder
+            # Never join a client supplied name as is: keep the basename only
+            name = sanitize_input_filename(name)
             file_path = os.path.join(COMFY_INPUT_PATH, name)
-            
-            with open(file_path, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    if chunk:
-                        f.write(chunk)
-            
+
+            if url:
+                print(f"runpod-worker-comfy - downloading {name} from {url}")
+
+                # Download the file with a (connect, read) timeout
+                response = requests.get(url, timeout=(15, 300), stream=True)
+                response.raise_for_status()
+
+                # Save the file to the input folder
+                saved_paths.append(file_path)
+                with open(file_path, 'wb') as f:
+                    for chunk in response.iter_content(chunk_size=1024 * 1024):
+                        if chunk:
+                            f.write(chunk)
+            else:
+                print(f"runpod-worker-comfy - decoding {name} from base64 data")
+
+                # Accept raw base64 as well as a data URI
+                data = file["data"]
+                if data.startswith("data:") and "," in data:
+                    data = data.split(",", 1)[1]
+
+                blob = base64.b64decode(data)
+                saved_paths.append(file_path)
+                with open(file_path, 'wb') as f:
+                    f.write(blob)
+
             responses.append(f"Successfully downloaded {name} to {file_path}")
             print(f"runpod-worker-comfy - saved {name} to {file_path}")
             
@@ -252,6 +311,7 @@ def download_files_from_urls(files):
             "status": "error",
             "message": "Some files failed to download",
             "details": download_errors,
+            "paths": saved_paths,
         }
 
     print(f"runpod-worker-comfy - file(s) download complete")
@@ -259,7 +319,21 @@ def download_files_from_urls(files):
         "status": "success",
         "message": "All files downloaded successfully",
         "details": responses,
+        "paths": saved_paths,
     }
+
+
+def cleanup_job_files(paths):
+    """
+    Remove the input and output files of a finished job from the container disk.
+    """
+    for path in paths:
+        try:
+            if path and os.path.isfile(path):
+                os.remove(path)
+                print(f"runpod-worker-comfy - removed {path}")
+        except OSError as e:
+            print(f"runpod-worker-comfy - WARNING: could not remove {path}: {str(e)}")
 
 
 def queue_workflow(workflow):
@@ -424,18 +498,21 @@ def upload_file_s3(local_file_path, job_id, bucket_name):
     )
 
 
-def process_output_images(outputs, job_id):
+def process_output_images(outputs, job_id, cleanup_paths=None):
     """
     Process outputs from ComfyUI workflow execution and upload to S3 or return as base64.
     
     Supports all ComfyUI output types:
     - images: Standard image outputs (PNG, JPG, WEBP)
+    - images: also carries SaveVideo outputs (MP4 with audio, flagged with "animated")
     - gifs: Animated outputs from VHS_VideoCombine, SaveAnimatedWEBP, SaveAnimatedPNG (MP4, GIF, WEBP)
     - videos: Direct video outputs from custom nodes
-    
+    - audio: Audio outputs from SaveAudio nodes
+
     Args:
         outputs (dict): ComfyUI execution outputs containing node results
         job_id (str): Unique job identifier for S3 upload paths
+        cleanup_paths (list, optional): Collects the local output files to remove after the job
     
     Returns:
         dict: Status, message, and files list with URLs or base64 data
@@ -445,12 +522,15 @@ def process_output_images(outputs, job_id):
     output_files = []
     
     # Supported output types in ComfyUI
-    OUTPUT_TYPES = ["images", "gifs", "videos"]
+    OUTPUT_TYPES = ["images", "gifs", "videos", "audio"]
     
     for node_id, node_output in outputs.items():
         for output_type in OUTPUT_TYPES:
             if output_type in node_output:
                 for item in node_output[output_type]:
+                    if not isinstance(item, dict):
+                        continue
+
                     # Get subfolder and filename
                     subfolder = item.get("subfolder", "")
                     filename = item.get("filename")
@@ -495,6 +575,15 @@ def process_output_images(outputs, job_id):
     s3_signature = get_clean_env("S3_SIGNATURE_VERSION") or get_clean_env("AWS_S3_SIGNATURE_VERSION")
     use_s3 = bool(bucket_endpoint_url)
 
+    if REQUIRE_S3 and not use_s3:
+        return {
+            "status": "error",
+            "message": (
+                "S3 upload is required for this worker (REQUIRE_S3=true) but "
+                "BUCKET_ENDPOINT_URL is not set: outputs are too large to be returned as base64"
+            ),
+        }
+
     if use_s3:
         os.environ["BUCKET_ENDPOINT_URL"] = bucket_endpoint_url
         if bucket_name:
@@ -531,7 +620,10 @@ def process_output_images(outputs, job_id):
         file_path = file_info["path"]
         local_file_path = os.path.join(COMFY_OUTPUT_PATH, file_path)
         filename = os.path.basename(file_path)
-        
+
+        if cleanup_paths is not None:
+            cleanup_paths.append(local_file_path)
+
         print(f"runpod-worker-comfy - processing {filename} at {local_file_path}")
         
         if not os.path.exists(local_file_path):
@@ -618,6 +710,19 @@ def handler(job):
     Returns:
         dict: A dictionary containing either an error message or a success status with generated images.
     """
+    cleanup_paths = []
+    try:
+        return run_job(job, cleanup_paths)
+    finally:
+        if CLEANUP_JOB_FILES:
+            cleanup_job_files(cleanup_paths)
+
+
+def run_job(job, cleanup_paths):
+    """
+    Run a single job. Every input and output file written for the job is added to
+    cleanup_paths so the caller can remove it once the job is done.
+    """
     job_input = job["input"]
 
     # Make sure that the input is valid
@@ -630,20 +735,37 @@ def handler(job):
     images = validated_data.get("images")
     files = validated_data.get("files")
 
+    # Fail before generating anything if the output could not be delivered
+    if REQUIRE_S3 and not get_clean_env("BUCKET_ENDPOINT_URL"):
+        return {
+            "error": (
+                "S3 upload is required for this worker (REQUIRE_S3=true) but "
+                "BUCKET_ENDPOINT_URL is not set"
+            )
+        }
+
     # Make sure that the ComfyUI API is available
-    check_server(
+    if not check_server(
         f"http://{COMFY_HOST}",
         COMFY_API_AVAILABLE_MAX_RETRIES,
         COMFY_API_AVAILABLE_INTERVAL_MS,
-    )
+    ):
+        return {"error": "ComfyUI API is not reachable, check the worker logs"}
 
     # Download files from URLs if they exist
     if files:
         download_result = download_files_from_urls(files)
+        cleanup_paths.extend(download_result.pop("paths", []))
         if download_result["status"] == "error":
             return download_result
 
     # Upload images if they exist
+    if images:
+        comfy_input_path = os.environ.get("COMFY_INPUT_PATH", "/comfyui/input")
+        cleanup_paths.extend(
+            os.path.join(comfy_input_path, os.path.basename(str(image["name"])))
+            for image in images
+        )
     upload_result = upload_images(images)
 
     if upload_result["status"] == "error":
@@ -695,7 +817,9 @@ def handler(job):
         return {"error": f"Error waiting for image generation: {str(e)}"}
 
     # Get the generated image and return it as URL in an AWS bucket or as base64
-    images_result = process_output_images(history[prompt_id].get("outputs"), job["id"])
+    images_result = process_output_images(
+        history[prompt_id].get("outputs"), job["id"], cleanup_paths
+    )
 
     result = {**images_result, "refresh_worker": REFRESH_WORKER}
 

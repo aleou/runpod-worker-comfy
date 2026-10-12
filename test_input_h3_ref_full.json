@@ -1,0 +1,404 @@
+{
+  "input": {
+    "workflow": {
+      "1": {
+        "inputs": {
+          "unet_name": "minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+          "weight_dtype": "default"
+        },
+        "class_type": "UNETLoader",
+        "_meta": {
+          "title": "Load Diffusion Model"
+        }
+      },
+      "2": {
+        "inputs": {
+          "clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+          "type": "minimax",
+          "device": "default"
+        },
+        "class_type": "CLIPLoader",
+        "_meta": {
+          "title": "Load CLIP"
+        }
+      },
+      "3": {
+        "inputs": {
+          "vae_name": "minimax_h3_video_vae_int8_convrot.safetensors"
+        },
+        "class_type": "VAELoader",
+        "_meta": {
+          "title": "Load VAE (video)"
+        }
+      },
+      "4": {
+        "inputs": {
+          "vae_name": "minimax_h3_audio_vae_fp32.safetensors"
+        },
+        "class_type": "VAELoader",
+        "_meta": {
+          "title": "Load VAE (audio)"
+        }
+      },
+      "5": {
+        "inputs": {
+          "model": [
+            "1",
+            0
+          ],
+          "lora_name": "minimax_h3_ref2v_turbo_8step_v1.0_768p_comfyui_resized_avg_rank_64_bf16.safetensors",
+          "strength_model": 1.0
+        },
+        "class_type": "LoraLoaderModelOnly",
+        "_meta": {
+          "title": "TURBO_LORA"
+        }
+      },
+      "6": {
+        "inputs": {
+          "model": [
+            "5",
+            0
+          ],
+          "predictor": "minimax_h3_r2va_veda_preview_fp8.safetensors",
+          "generated_sparsity": "32",
+          "reference_sparsity": "32",
+          "full_attention_layers": "",
+          "full_attention_steps": "",
+          "verbose": false
+        },
+        "class_type": "VedaSparseAttention",
+        "_meta": {
+          "title": "VEDA"
+        }
+      },
+      "7": {
+        "inputs": {
+          "value": "Anime style, twilight light. The character of <Picture 1> walks through the place of the first frame and reaches the view of the last frame, speaking with the voice of <Audio 1>, lips in sync. One continuous shot. Audio: the voice of <Audio 1>, soft ambience."
+        },
+        "class_type": "PrimitiveStringMultiline",
+        "_meta": {
+          "title": "PROMPT"
+        }
+      },
+      "8": {
+        "inputs": {
+          "value": 1344
+        },
+        "class_type": "PrimitiveInt",
+        "_meta": {
+          "title": "WIDTH"
+        }
+      },
+      "9": {
+        "inputs": {
+          "value": 768
+        },
+        "class_type": "PrimitiveInt",
+        "_meta": {
+          "title": "HEIGHT"
+        }
+      },
+      "10": {
+        "inputs": {
+          "value": 124
+        },
+        "class_type": "PrimitiveInt",
+        "_meta": {
+          "title": "LENGTH"
+        }
+      },
+      "11": {
+        "inputs": {
+          "clip": [
+            "2",
+            0
+          ],
+          "vae": [
+            "3",
+            0
+          ],
+          "audio_vae": [
+            "4",
+            0
+          ],
+          "prompt": [
+            "7",
+            0
+          ],
+          "width": [
+            "8",
+            0
+          ],
+          "height": [
+            "9",
+            0
+          ],
+          "length": [
+            "10",
+            0
+          ],
+          "ref_image_size": "match",
+          "ref_images.ref_image_0": [
+            "23",
+            0
+          ],
+          "ref_audios.ref_audio_0": [
+            "24",
+            0
+          ]
+        },
+        "class_type": "MiniMaxH3ReferenceToVideo",
+        "_meta": {
+          "title": "MiniMax H3 Reference to Video"
+        }
+      },
+      "12": {
+        "inputs": {
+          "noise_seed": 42
+        },
+        "class_type": "RandomNoise",
+        "_meta": {
+          "title": "SEED"
+        }
+      },
+      "13": {
+        "inputs": {
+          "sampler_name": "res_multistep"
+        },
+        "class_type": "KSamplerSelect",
+        "_meta": {
+          "title": "KSamplerSelect"
+        }
+      },
+      "14": {
+        "inputs": {
+          "model": [
+            "5",
+            0
+          ],
+          "scheduler": "simple",
+          "steps": 8,
+          "denoise": 1.0
+        },
+        "class_type": "BasicScheduler",
+        "_meta": {
+          "title": "STEPS"
+        }
+      },
+      "15": {
+        "inputs": {
+          "model": [
+            "6",
+            0
+          ],
+          "conditioning": [
+            "28",
+            0
+          ]
+        },
+        "class_type": "BasicGuider",
+        "_meta": {
+          "title": "BasicGuider"
+        }
+      },
+      "16": {
+        "inputs": {
+          "noise": [
+            "12",
+            0
+          ],
+          "guider": [
+            "15",
+            0
+          ],
+          "sampler": [
+            "13",
+            0
+          ],
+          "sigmas": [
+            "14",
+            0
+          ],
+          "latent_image": [
+            "11",
+            1
+          ]
+        },
+        "class_type": "SamplerCustomAdvanced",
+        "_meta": {
+          "title": "SamplerCustomAdvanced"
+        }
+      },
+      "17": {
+        "inputs": {
+          "samples": [
+            "16",
+            0
+          ],
+          "vae": [
+            "3",
+            0
+          ]
+        },
+        "class_type": "VAEDecode",
+        "_meta": {
+          "title": "VAE Decode (video)"
+        }
+      },
+      "18": {
+        "inputs": {
+          "samples": [
+            "16",
+            0
+          ],
+          "vae": [
+            "4",
+            0
+          ]
+        },
+        "class_type": "VAEDecodeAudio",
+        "_meta": {
+          "title": "VAE Decode (audio)"
+        }
+      },
+      "19": {
+        "inputs": {
+          "images": [
+            "17",
+            0
+          ],
+          "audio": [
+            "18",
+            0
+          ],
+          "fps": 24,
+          "bit_depth": 8
+        },
+        "class_type": "CreateVideo",
+        "_meta": {
+          "title": "FPS"
+        }
+      },
+      "20": {
+        "inputs": {
+          "video": [
+            "19",
+            0
+          ],
+          "filename_prefix": "video/MiniMax_H3",
+          "format": "auto",
+          "format.codec": "auto"
+        },
+        "class_type": "SaveVideo",
+        "_meta": {
+          "title": "Save Video"
+        }
+      },
+      "23": {
+        "inputs": {
+          "image": "ref0.png"
+        },
+        "class_type": "LoadImage",
+        "_meta": {
+          "title": "REF_IMAGE_0"
+        }
+      },
+      "24": {
+        "inputs": {
+          "audio": "voice.mp3"
+        },
+        "class_type": "LoadAudio",
+        "_meta": {
+          "title": "REF_AUDIO_0"
+        }
+      },
+      "25": {
+        "inputs": {
+          "image": "guide_first.png"
+        },
+        "class_type": "LoadImage",
+        "_meta": {
+          "title": "GUIDE_FIRST"
+        }
+      },
+      "26": {
+        "inputs": {
+          "image": "guide_last.png"
+        },
+        "class_type": "LoadImage",
+        "_meta": {
+          "title": "GUIDE_LAST"
+        }
+      },
+      "27": {
+        "inputs": {
+          "positive": [
+            "11",
+            0
+          ],
+          "vae": [
+            "3",
+            0
+          ],
+          "latent": [
+            "11",
+            1
+          ],
+          "image": [
+            "25",
+            0
+          ],
+          "frame_idx": 0
+        },
+        "class_type": "MiniMaxH3AddGuide",
+        "_meta": {
+          "title": "GUIDE_FIRST_IDX"
+        }
+      },
+      "28": {
+        "inputs": {
+          "positive": [
+            "27",
+            0
+          ],
+          "vae": [
+            "3",
+            0
+          ],
+          "latent": [
+            "11",
+            1
+          ],
+          "image": [
+            "26",
+            0
+          ],
+          "frame_idx": -1
+        },
+        "class_type": "MiniMaxH3AddGuide",
+        "_meta": {
+          "title": "GUIDE_LAST_IDX"
+        }
+      }
+    },
+    "files": [
+      {
+        "name": "ref0.png",
+        "url": "https://huggingface.co/Veda-Sparse/Minimax-H3-R2VA-Veda-Preview/resolve/1598b407905b7c0af85aa0c13acdfa6f01ff2982/media/showcase/03_anime_twilight_carnival/references/picture_1_character.png"
+      },
+      {
+        "name": "voice.mp3",
+        "url": "https://huggingface.co/Veda-Sparse/Minimax-H3-R2VA-Veda-Preview/resolve/1598b407905b7c0af85aa0c13acdfa6f01ff2982/media/showcase/01_pink_lamb/references/audio_2_voice.mp3"
+      },
+      {
+        "name": "guide_first.png",
+        "url": "https://huggingface.co/Veda-Sparse/Minimax-H3-R2VA-Veda-Preview/resolve/1598b407905b7c0af85aa0c13acdfa6f01ff2982/media/showcase/03_anime_twilight_carnival/references/picture_2_fairground.png"
+      },
+      {
+        "name": "guide_last.png",
+        "url": "https://huggingface.co/Veda-Sparse/Minimax-H3-R2VA-Veda-Preview/resolve/1598b407905b7c0af85aa0c13acdfa6f01ff2982/media/showcase/02_anime_train_coastal_window/references/picture_1.png"
+      }
+    ]
+  }
+}

@@ -1,0 +1,287 @@
+{
+  "input": {
+    "workflow": {
+      "1": {
+        "inputs": {
+          "unet_name": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+          "weight_dtype": "default"
+        },
+        "class_type": "UNETLoader",
+        "_meta": {
+          "title": "Load Diffusion Model"
+        }
+      },
+      "2": {
+        "inputs": {
+          "clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+          "type": "minimax",
+          "device": "default"
+        },
+        "class_type": "CLIPLoader",
+        "_meta": {
+          "title": "Load CLIP"
+        }
+      },
+      "3": {
+        "inputs": {
+          "vae_name": "minimax_h3_video_vae_int8_convrot.safetensors"
+        },
+        "class_type": "VAELoader",
+        "_meta": {
+          "title": "Load VAE (video)"
+        }
+      },
+      "4": {
+        "inputs": {
+          "vae_name": "minimax_h3_audio_vae_fp32.safetensors"
+        },
+        "class_type": "VAELoader",
+        "_meta": {
+          "title": "Load VAE (audio)"
+        }
+      },
+      "5": {
+        "inputs": {
+          "model": [
+            "1",
+            0
+          ],
+          "lora_name": "minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+          "strength_model": 1.0
+        },
+        "class_type": "LoraLoaderModelOnly",
+        "_meta": {
+          "title": "TURBO_LORA"
+        }
+      },
+      "6": {
+        "inputs": {
+          "model": [
+            "5",
+            0
+          ],
+          "predictor": "minimax_h3_t2va_veda_8nfe_600step_preview_fp8.safetensors",
+          "generated_sparsity": "32",
+          "reference_sparsity": "32",
+          "full_attention_layers": "",
+          "full_attention_steps": "",
+          "verbose": false
+        },
+        "class_type": "VedaSparseAttention",
+        "_meta": {
+          "title": "VEDA"
+        }
+      },
+      "7": {
+        "inputs": {
+          "value": "Realistic live-action cinematic look, shallow depth of field, soft film grain. A street musician plays an acoustic guitar under a covered market at dusk, warm string lights overhead, light rain falling beyond the arcade. The camera slowly pushes in on his hands, then tilts up to his face as he smiles and says: \"This one is for you.\" Audio: fingerpicked guitar, rain, distant crowd murmur, his voice clear and close."
+        },
+        "class_type": "PrimitiveStringMultiline",
+        "_meta": {
+          "title": "PROMPT"
+        }
+      },
+      "8": {
+        "inputs": {
+          "value": 1344
+        },
+        "class_type": "PrimitiveInt",
+        "_meta": {
+          "title": "WIDTH"
+        }
+      },
+      "9": {
+        "inputs": {
+          "value": 768
+        },
+        "class_type": "PrimitiveInt",
+        "_meta": {
+          "title": "HEIGHT"
+        }
+      },
+      "10": {
+        "inputs": {
+          "value": 124
+        },
+        "class_type": "PrimitiveInt",
+        "_meta": {
+          "title": "LENGTH"
+        }
+      },
+      "11": {
+        "inputs": {
+          "clip": [
+            "2",
+            0
+          ],
+          "vae": [
+            "3",
+            0
+          ],
+          "prompt": [
+            "7",
+            0
+          ],
+          "width": [
+            "8",
+            0
+          ],
+          "height": [
+            "9",
+            0
+          ],
+          "length": [
+            "10",
+            0
+          ]
+        },
+        "class_type": "MiniMaxH3ImageToVideo",
+        "_meta": {
+          "title": "MiniMax H3 Image to Video"
+        }
+      },
+      "12": {
+        "inputs": {
+          "noise_seed": 42
+        },
+        "class_type": "RandomNoise",
+        "_meta": {
+          "title": "SEED"
+        }
+      },
+      "13": {
+        "inputs": {
+          "sampler_name": "res_multistep"
+        },
+        "class_type": "KSamplerSelect",
+        "_meta": {
+          "title": "KSamplerSelect"
+        }
+      },
+      "14": {
+        "inputs": {
+          "model": [
+            "5",
+            0
+          ],
+          "scheduler": "simple",
+          "steps": 8,
+          "denoise": 1.0
+        },
+        "class_type": "BasicScheduler",
+        "_meta": {
+          "title": "STEPS"
+        }
+      },
+      "15": {
+        "inputs": {
+          "model": [
+            "6",
+            0
+          ],
+          "conditioning": [
+            "11",
+            0
+          ]
+        },
+        "class_type": "BasicGuider",
+        "_meta": {
+          "title": "BasicGuider"
+        }
+      },
+      "16": {
+        "inputs": {
+          "noise": [
+            "12",
+            0
+          ],
+          "guider": [
+            "15",
+            0
+          ],
+          "sampler": [
+            "13",
+            0
+          ],
+          "sigmas": [
+            "14",
+            0
+          ],
+          "latent_image": [
+            "11",
+            1
+          ]
+        },
+        "class_type": "SamplerCustomAdvanced",
+        "_meta": {
+          "title": "SamplerCustomAdvanced"
+        }
+      },
+      "17": {
+        "inputs": {
+          "samples": [
+            "16",
+            0
+          ],
+          "vae": [
+            "3",
+            0
+          ]
+        },
+        "class_type": "VAEDecode",
+        "_meta": {
+          "title": "VAE Decode (video)"
+        }
+      },
+      "18": {
+        "inputs": {
+          "samples": [
+            "16",
+            0
+          ],
+          "vae": [
+            "4",
+            0
+          ]
+        },
+        "class_type": "VAEDecodeAudio",
+        "_meta": {
+          "title": "VAE Decode (audio)"
+        }
+      },
+      "19": {
+        "inputs": {
+          "images": [
+            "17",
+            0
+          ],
+          "audio": [
+            "18",
+            0
+          ],
+          "fps": 24,
+          "bit_depth": 8
+        },
+        "class_type": "CreateVideo",
+        "_meta": {
+          "title": "FPS"
+        }
+      },
+      "20": {
+        "inputs": {
+          "video": [
+            "19",
+            0
+          ],
+          "filename_prefix": "video/MiniMax_H3",
+          "format": "auto",
+          "format.codec": "auto"
+        },
+        "class_type": "SaveVideo",
+        "_meta": {
+          "title": "Save Video"
+        }
+      }
+    }
+  }
+}

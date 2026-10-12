@@ -131,3 +131,32 @@ target "watermark" {
   tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:watermark-${RELEASE_VERSION}"]
   inherits = ["base"]
 }
+
+# MiniMax H3 : Dockerfile séparé (PyTorch cu130, ComfyUI 0.39.2, Veda), 9 modèles embarqués.
+# Volontairement absent du groupe "default" : un build global ne doit pas lancer 65 Go de téléchargements.
+variable "TORCH_VERSION" {
+  default = "2.14.1"
+}
+
+variable "TORCHVISION_VERSION" {
+  default = "0.29.1"
+}
+
+# Commit "release: 0.3.1" de veda-sparse/Veda-on-ComfyUI
+variable "VEDA_COMMIT" {
+  default = "8d7ac153ac215d636eaf1b5910b0536c3de9e6ed"
+}
+
+target "minimax-h3" {
+  context = "."
+  dockerfile = "Dockerfile.h3"
+  platforms = ["linux/amd64"]
+  args = {
+    TORCH_VERSION = "${TORCH_VERSION}"
+    TORCHVISION_VERSION = "${TORCHVISION_VERSION}"
+    VEDA_COMMIT = "${VEDA_COMMIT}"
+  }
+  # Token HF facultatif, passé en secret BuildKit (jamais en ARG)
+  secret = HUGGINGFACE_ACCESS_TOKEN != "" ? ["type=env,id=hf_token,env=HUGGINGFACE_ACCESS_TOKEN"] : []
+  tags = ["${DOCKERHUB_REPO}/${DOCKERHUB_IMG}:minimax-h3-${RELEASE_VERSION}"]
+}
