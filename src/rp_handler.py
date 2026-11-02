@@ -736,13 +736,19 @@ def run_job(job, cleanup_paths):
     files = validated_data.get("files")
 
     # Fail before generating anything if the output could not be delivered
-    if REQUIRE_S3 and not get_clean_env("BUCKET_ENDPOINT_URL"):
-        return {
-            "error": (
-                "S3 upload is required for this worker (REQUIRE_S3=true) but "
-                "BUCKET_ENDPOINT_URL is not set"
-            )
-        }
+    if REQUIRE_S3:
+        missing = [
+            name
+            for name in ("BUCKET_ENDPOINT_URL", "BUCKET_NAME")
+            if not get_clean_env(name)
+        ]
+        if missing:
+            return {
+                "error": (
+                    "S3 upload is required for this worker (REQUIRE_S3=true) but "
+                    f"{' and '.join(missing)} is not set"
+                )
+            }
 
     # Make sure that the ComfyUI API is available
     if not check_server(

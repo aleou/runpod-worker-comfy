@@ -73,6 +73,17 @@ class TestInputFiles(unittest.TestCase):
         self.assertIn("BUCKET_ENDPOINT_URL", result["error"])
         mock_check_server.assert_not_called()
 
+    @patch("rp_handler.check_server")
+    def test_handler_requires_bucket_name_before_generating(self, mock_check_server):
+        env = {"BUCKET_ENDPOINT_URL": "https://s3.example.com"}
+        with patch.object(rp_handler, "REQUIRE_S3", True), patch.dict(os.environ, env, clear=False):
+            os.environ.pop("BUCKET_NAME", None)
+            result = rp_handler.handler({"id": "123", "input": {"workflow": {}}})
+
+        self.assertIn("BUCKET_NAME", result["error"])
+        self.assertNotIn("BUCKET_ENDPOINT_URL", result["error"])
+        mock_check_server.assert_not_called()
+
     def test_save_video_output_is_found_and_removed_after_job(self):
         with tempfile.TemporaryDirectory() as output_dir:
             os.makedirs(os.path.join(output_dir, "video"))

@@ -7,7 +7,7 @@ variable "DOCKERHUB_IMG" {
 }
 
 variable "RELEASE_VERSION" {
-  default = "5.13"
+  default = "5.14"
 }
 
 variable "HUGGINGFACE_ACCESS_TOKEN" {
@@ -132,7 +132,7 @@ target "watermark" {
   inherits = ["base"]
 }
 
-# MiniMax H3 : Dockerfile séparé (PyTorch cu130, ComfyUI 0.39.2, Veda), 9 modèles embarqués.
+# MiniMax H3 : Dockerfile séparé (PyTorch cu130, ComfyUI 0.39.2, Veda), 12 modèles embarqués.
 # Volontairement absent du groupe "default" : un build global ne doit pas lancer 65 Go de téléchargements.
 variable "TORCH_VERSION" {
   default = "2.14.1"

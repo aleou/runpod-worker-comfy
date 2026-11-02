@@ -1,7 +1,7 @@
 # Cible `minimax-h3`
 
 Vidéo avec audio via MiniMax H3 sous ComfyUI, accélérée par la LoRA turbo 8 steps et Veda.
-Image autoportée : les 9 modèles (64,5 Go) sont dans l'image, aucun network volume.
+Image autoportée : les 12 modèles (65,1 Go) sont dans l'image, aucun network volume.
 
 ## Versions figées
 
@@ -11,7 +11,8 @@ Image autoportée : les 9 modèles (64,5 Go) sont dans l'image, aucun network vo
 | PyTorch | `torch 2.14.1+cu130`, `torchvision 0.29.1+cu130` (Triton 3.8 tiré par torch) |
 | ComfyUI | `v0.39.2` |
 | Veda | `veda-sparse-attention` 0.3.1, commit `8d7ac153ac215d636eaf1b5910b0536c3de9e6ed` |
-| Modèles | URL Hugging Face figées par hash de commit, taille et SHA-256 vérifiés au build |
+| Modèles | URL Hugging Face figées par hash de commit, Civitai par id de version, taille et SHA-256 vérifiés au build |
+| LoRA additionnelles | `h3_character_swap_v1.5` (akatz-ai), `MysticXXX_MMH3-V5` (FL2VA) et `MysticXXX_MMH3-V5-ref2va` (Civitai 3416478), dans `models/loras/` |
 
 `torchaudio` n'est pas installé : ComfyUI 0.39.2 ne l'importe pas et il n'existe pas de roue cu130 pour torch 2.14.
 
@@ -23,7 +24,7 @@ Machine Linux avec Docker buildx et au moins 250 Go de disque libre.
 # facultatif : évite le rate-limit Hugging Face (passé en secret BuildKit, pas en ARG)
 export HUGGINGFACE_ACCESS_TOKEN=hf_xxx
 
-RELEASE_VERSION=5.13 docker buildx bake minimax-h3 --push
+RELEASE_VERSION=5.14 docker buildx bake minimax-h3 --push
 ```
 
 Tag produit : `aleou/runpod-worker-comfy:minimax-h3-<RELEASE_VERSION>`.
